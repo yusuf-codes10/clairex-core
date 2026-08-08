@@ -16,11 +16,11 @@ export class ClaireRouter {
     }
 
     post (path: string, handler: Function) {
-        this.register('GET', path, handler);
+        this.register('POST', path, handler);
     }
 
     patch (path: string, handler: Function) {
-        this.register('POST', path, handler);
+        this.register('PATHC', path, handler);
     }
 
     put (path: string, handler: Function) {
