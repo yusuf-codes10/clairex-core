@@ -1,8 +1,9 @@
-export class ClaireX {
+import { ClaireRouter } from "./router";
+export class ClaireX extends ClaireRouter  {
     private port;
-    private routes = new Map();
 
     constructor (port: number = 3000) {
+        super();
         this.port = port;
     }
 
