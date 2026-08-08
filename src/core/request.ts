@@ -7,11 +7,11 @@ export class ClaireRequest {
         this.params = params;
     }
 
-    json () {
-
+    async json () {
+        return await this.raw.json();
     }
 
-    text () {
-        
+    async text () {
+        return await this.raw.text();
     }
 }
