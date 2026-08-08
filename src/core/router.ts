@@ -11,23 +11,23 @@ export class ClaireRouter {
         this.routes.push({method, pattern: path, handler});
     }
 
-    get () {
-
+    get (path: string, handler: Function) {
+        this.register('GET', path, handler);
     }
 
-    post () {
-
+    post (path: string, handler: Function) {
+        this.register('GET', path, handler);
     }
 
-    patch () {
-
+    patch (path: string, handler: Function) {
+        this.register('POST', path, handler);
     }
 
-    put () {
-
+    put (path: string, handler: Function) {
+        this.register('PUT', path, handler);
     }
 
-    delete () {
-
+    delete (path: string, handler: Function) {
+        this.register('DELETE', path, handler);
     }
 }
