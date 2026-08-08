@@ -15,10 +15,8 @@ export class ClaireX extends ClaireRouter  {
       fetch: (req: Request) => {
         const context = new ClaireContext(req);
 
-        const url = new URL(req.url);
-
         for (const route of this.routes) {
-            if (route.method !== req.method) continue; //skip to next iteration
+            if (route.method !== context.request.method) continue; //skip to next iteration
             return route.handler;
         }
 

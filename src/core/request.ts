@@ -26,4 +26,8 @@ export class ClaireRequest {
     get url () {
         return this._url;
     }
+
+    get pathname () {
+        return this._url.pathname;
+    }
 }
