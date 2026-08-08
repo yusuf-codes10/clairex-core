@@ -10,7 +10,8 @@ const users = [
 const app = new ClaireX(3456);
 
 app.get('/' , (c: ClaireContext) => {
-    return
+    console.log(users);
+    return c.response.json(users);
 })
 
 app.listen();
