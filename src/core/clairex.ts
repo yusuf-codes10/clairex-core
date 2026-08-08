@@ -2,9 +2,9 @@ import { ClaireRouter } from "./router";
 export class ClaireX extends ClaireRouter  {
     private port;
 
-    constructor (port: number = 3000) {
+    constructor (port?: number) {
         super();
-        this.port = port;
+        this.port = port ?? 3000;
     }
 
   listen() {
