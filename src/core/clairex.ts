@@ -1,4 +1,5 @@
 import { ClaireRouter } from "./router";
+import { ClaireContext } from "./context";
 export class ClaireX extends ClaireRouter  {
     private port;
 
@@ -12,6 +13,8 @@ export class ClaireX extends ClaireRouter  {
       port: this.port,
 
       fetch: (req: Request) => {
+        const context = new ClaireContext(req);
+
         const url = new URL(req.url);
 
         for (const route of this.routes) {
