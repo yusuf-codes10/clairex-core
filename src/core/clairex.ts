@@ -14,15 +14,11 @@ export class ClaireX extends ClaireRouter  {
       fetch: (req: Request) => {
         const url = new URL(req.url);
 
-        const handler = this.routes.get(
-            `${req.method}:${url.pathname}`
-        );
-
-        if (!handler) {
-            return new Response('Not Found', { status: 404});
+        for (const route of this.routes) {
+            if (route.method !== req.method) continue; //skip to next iteration
+            return route.handler;
         }
 
-        return handler;
       }
     });
 
