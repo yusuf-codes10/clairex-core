@@ -3,6 +3,10 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "bun run src/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
