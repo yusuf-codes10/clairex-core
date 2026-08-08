@@ -20,7 +20,7 @@ export class ClaireRouter {
     }
 
     patch (path: string, handler: Function) {
-        this.register('PATHC', path, handler);
+        this.register('PATCH', path, handler);
     }
 
     put (path: string, handler: Function) {
