@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "dev": "bun run src/index.ts"
+    "dev": "bun run src/index.ts",
+    "example": "bun run example/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"

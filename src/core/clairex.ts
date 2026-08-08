@@ -17,6 +17,10 @@ export class ClaireX {
             `${req.method}:${url.pathname}`
         );
 
+        if (!handler) {
+            return new Response('Not Found', { status: 404});
+        }
+
         return handler;
       }
     });
