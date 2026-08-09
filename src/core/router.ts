@@ -5,10 +5,10 @@ type RouterEntry = {
 }
 
 export class ClaireRouter {
-    protected routes: RouterEntry [] = [];
+    protected _routes: RouterEntry [] = [];
 
     private register (method: string, path: string, handler: Function): void {
-        this.routes.push({method, pattern: path, handler});
+        this._routes.push({method, pattern: path, handler});
     }
 
     get (path: string, handler: Function): void {
@@ -29,5 +29,9 @@ export class ClaireRouter {
 
     delete (path: string, handler: Function): void {
         this.register('DELETE', path, handler);
+    }
+
+    get router() {
+        return this._routes;
     }
 }
