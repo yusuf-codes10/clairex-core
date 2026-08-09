@@ -15,8 +15,9 @@ app.get("/", (c: ClaireContext) => {
 });
 
 app.post("/", async (c: ClaireContext) => {
-  const {name, age} = await c.request.json();
-  users.push({name, age});
+  // TODO: The real problem ClaireX will sovle
+  const body = (await c.request.json()) as { name: string; age: number };
+  users.push(body);
   return c.response.json(users);
 });
 
