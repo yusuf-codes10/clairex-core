@@ -20,4 +20,12 @@ export class ClaireResponse {
       headers: { "Content-Type": "text/plain" },
     });
   }
+
+  html(data: string, status: number = 200) {
+    this.status = status;
+    return new Response(data, {
+      status: this.status,
+      headers: { "Content-Type": "text/html" },
+    });
+  }
 }
