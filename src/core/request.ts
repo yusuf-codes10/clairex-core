@@ -38,4 +38,8 @@ export class ClaireRequest {
   get pathname() {
     return this._url.pathname;
   }
+
+  get headers() {
+    return Object.fromEntries(this.raw.headers);
+  }
 }
