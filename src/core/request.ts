@@ -39,6 +39,10 @@ export class ClaireRequest {
     return this._url.pathname;
   }
 
+  get method(): string {
+    return this._method;
+  }
+
   get params (): Record <string, string> {
     return this._params;
   }
