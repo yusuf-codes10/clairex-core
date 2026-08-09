@@ -7,4 +7,6 @@ export abstract class ClaireController {
     constructor (prefix: string) {
         this.prefix = prefix;
     }
+
+    protected abstract register(): void;
 }
