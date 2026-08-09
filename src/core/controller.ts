@@ -17,4 +17,8 @@ export abstract class ClaireController {
     ) {
         this._router[method](`${this.prefix}${path}`, handler.bind(this));
     }
+
+    get router() {
+        return this._router;
+    }
 }
