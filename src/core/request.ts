@@ -11,11 +11,11 @@ export class ClaireRequest {
     this._method = req.method;
   }
 
-  async json() {
+  async json(): Promise<unknown> {
     return await this.raw.json();
   }
 
-  async text() {
+  async text(): Promise<string> {
     return await this.raw.text();
   }
 
@@ -31,19 +31,19 @@ export class ClaireRequest {
     return result;
   }
 
-  get url() {
+  get url(): URL {
     return this._url;
   }
 
-  get pathname() {
+  get pathname(): string {
     return this._url.pathname;
   }
 
-  get params () {
+  get params (): Record <string, string> {
     return this._params;
   }
 
-  get headers() {
+  get headers(): Record<string, string> {
     return Object.fromEntries(this.raw.headers);
   }
 }
