@@ -31,7 +31,7 @@ export class ClaireRouter {
         this.register('DELETE', path, handler);
     }
 
-    get router() {
+    get routes() {
         return this._routes;
     }
 }

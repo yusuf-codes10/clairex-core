@@ -19,6 +19,6 @@ export abstract class ClaireController {
     }
 
     get router() {
-        return this._router;
+        return this._router.routes;
     }
 }
