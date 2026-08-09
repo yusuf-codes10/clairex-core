@@ -23,6 +23,14 @@ export class ClaireRequest {
     return Object.fromEntries(this._url.searchParams);
   }
 
+  get queries(): Record<string, string[]> {
+    const result: Record<string, string[]> = {};
+    for (const key of this._url.searchParams.keys()) {
+      result[key] = this._url.searchParams.getAll(key);
+    }
+    return result;
+  }
+
   get url() {
     return this._url;
   }
