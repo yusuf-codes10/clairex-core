@@ -5,7 +5,7 @@ export class ClaireResponse {
     this._status = status;
   }
 
-  json(data: unknown, status: number = 200) {
+  json(data: unknown, status: number = 200): Response {
     this._status = status;
     return new Response(JSON.stringify(data), {
       status: this._status,
@@ -13,7 +13,7 @@ export class ClaireResponse {
     });
   }
 
-  text(data: string, status: number = 200) {
+  text(data: string, status: number = 200): Response {
     this._status = status;
     return new Response(data, {
       status: this._status,
@@ -21,7 +21,7 @@ export class ClaireResponse {
     });
   }
 
-  html(data: string, status: number = 200) {
+  html(data: string, status: number = 200): Response {
     this._status = status;
     return new Response(data, {
       status: this._status,
@@ -29,7 +29,7 @@ export class ClaireResponse {
     });
   }
 
-  redirect(url: string, status: 301 | 302 = 302) {
+  redirect(url: string, status: 301 | 302 = 302): Response {
     this._status = status;
     return new Response(null, {
       status: this._status,
@@ -39,7 +39,7 @@ export class ClaireResponse {
     });
   }
 
-  get status () {
+  get status (): number {
     return this._status;
   }
 }
