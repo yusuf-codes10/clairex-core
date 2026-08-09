@@ -28,4 +28,14 @@ export class ClaireResponse {
       headers: { "Content-Type": "text/html" },
     });
   }
+
+  redirect(url: string, status: 301 | 302 = 302) {
+    this.status = status;
+    return new Response(null, {
+      status: this.status,
+      headers: {
+        Location: url,
+      },
+    });
+  }
 }
