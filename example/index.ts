@@ -21,4 +21,9 @@ app.post("/", async (c: ClaireContext) => {
   return c.response.json(users);
 });
 
+// get user by id
+app.get('/:name', (c: ClaireContext) => {
+
+})
+
 app.listen();
