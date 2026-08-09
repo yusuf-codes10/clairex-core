@@ -1,5 +1,6 @@
 import { ClaireRouter } from "./router";
 import { ClaireContext } from "./context";
+import { matchRoute } from "./utils";
 export class ClaireX extends ClaireRouter {
   private port;
 
@@ -17,7 +18,10 @@ export class ClaireX extends ClaireRouter {
 
         for (const route of this.routes) {
           if (route.method !== context.request.method) continue; //skip to next iteration
-          if (route.pattern !== context.request.pathname) continue;
+
+          const params = matchRoute(route.pattern, context.request.pathname);
+
+          if (params === null) continue;
 
           return route.handler(context);
         }
