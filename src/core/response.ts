@@ -12,4 +12,12 @@ export class ClaireResponse {
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  text(data: string, status: number = 200) {
+    this.status = status;
+    return new Response(data, {
+      status: this.status,
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
 }
