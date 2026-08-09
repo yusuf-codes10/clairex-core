@@ -22,8 +22,12 @@ app.post("/", async (c: ClaireContext) => {
 });
 
 // get user by id
-app.get('/:name', (c: ClaireContext) => {
-
-})
+app.get("/:name", (c: ClaireContext) => {
+  const { name } = c.request.params;
+  console.log("name is: ", name);
+  if (!name) return c.response.text("Not found", 404);
+  const foundUser = users.find((u) => u.name === name);
+  return c.response.json(foundUser);
+});
 
 app.listen();

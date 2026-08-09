@@ -1,12 +1,12 @@
 export class ClaireRequest {
   private raw: Request;
-  private _params: Record<string, string>;
+  public params: Record<string, string>;
   private _method: string;
   private _url: URL;
 
   constructor(req: Request, params: Record<string, string> = {}) {
     this.raw = req;
-    this._params = params;
+    this.params = params;
     this._url = new URL(req.url);
     this._method = req.method;
   }
@@ -43,9 +43,9 @@ export class ClaireRequest {
     return this._method;
   }
 
-  get params (): Record <string, string> {
-    return this._params;
-  }
+  // get params (): Record <string, string> {
+  //   return this._params;
+  // }
 
   get headers(): Record<string, string> {
     return Object.fromEntries(this.raw.headers);

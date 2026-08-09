@@ -21,7 +21,10 @@ export class ClaireX extends ClaireRouter {
 
           const params = matchRoute(route.pattern, context.request.pathname);
 
+          // TODO: we need to set up the params here!
           if (params === null) continue;
+
+          context.request.params = params;
 
           return route.handler(context);
         }
