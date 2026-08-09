@@ -1,33 +1,33 @@
 export class ClaireRequest {
-    private raw: Request;
-    public params: Record<string, string>;
-    private _method: string;
-    private _url: URL;
+  private raw: Request;
+  public params: Record<string, string>;
+  private _method: string;
+  private _url: URL;
 
-    constructor (req: Request, params: Record<string, string> = {}) {
-        this.raw = req;
-        this.params = params;
-        this._url = new URL(req.url);
-        this._method = req.method;
-    }
+  constructor(req: Request, params: Record<string, string> = {}) {
+    this.raw = req;
+    this.params = params;
+    this._url = new URL(req.url);
+    this._method = req.method;
+  }
 
-    async json () {
-        return await this.raw.json();
-    }
+  async json() {
+    return await this.raw.json();
+  }
 
-    async text () {
-        return await this.raw.text();
-    }
+  async text() {
+    return await this.raw.text();
+  }
 
-    get method () {
-        return this._method;
-    }
+  get query(): Record<string, string> {
+    return Object.fromEntries(this._url.searchParams);
+  }
 
-    get url () {
-        return this._url;
-    }
+  get url() {
+    return this._url;
+  }
 
-    get pathname () {
-        return this._url.pathname;
-    }
+  get pathname() {
+    return this._url.pathname;
+  }
 }
