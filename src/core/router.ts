@@ -7,27 +7,27 @@ type RouterEntry = {
 export class ClaireRouter {
     protected routes: RouterEntry [] = [];
 
-    private register (method: string, path: string, handler: Function) {
+    private register (method: string, path: string, handler: Function): void {
         this.routes.push({method, pattern: path, handler});
     }
 
-    get (path: string, handler: Function) {
+    get (path: string, handler: Function): void {
         this.register('GET', path, handler);
     }
 
-    post (path: string, handler: Function) {
+    post (path: string, handler: Function): void {
         this.register('POST', path, handler);
     }
 
-    patch (path: string, handler: Function) {
+    patch (path: string, handler: Function): void {
         this.register('PATCH', path, handler);
     }
 
-    put (path: string, handler: Function) {
+    put (path: string, handler: Function): void {
         this.register('PUT', path, handler);
     }
 
-    delete (path: string, handler: Function) {
+    delete (path: string, handler: Function): void {
         this.register('DELETE', path, handler);
     }
 }
