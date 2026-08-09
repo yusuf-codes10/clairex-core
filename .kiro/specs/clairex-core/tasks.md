@@ -133,25 +133,93 @@ example/
 
 ---
 
+### Task 8: ClaireRequest — Query String Parsing ✅
+**Commits:** `e498ebb`, `f5ad2fe`
+
+**What was done:**
+- Added `query` getter to ClaireRequest — wraps `this._url.searchParams` via `Object.fromEntries()`
+- Returns `Record<string, string>` (single-value, last wins for duplicate keys)
+- Added `queries` getter for multi-value support — iterates keys, uses `getAll()` per key
+- Returns `Record<string, string[]>` (preserves all occurrences of repeated keys)
+
+**Design decisions:**
+- Both are getters (not methods) — ClaireX style: getters for derived state, methods for actions
+- `query` for simple use cases, `queries` for when the consumer needs all values
+- Same mental model as Vue computed properties — derived from URL, no side effects
+
+---
+
+### Task 9: ClaireResponse — Additional Methods ✅
+**Commits:** `f2b5f3c`, `a908388`, `09c55ba`, `512fec4`
+
+**What was done:**
+- Implemented `text(data: string, status?: number): Response` — returns `text/plain` content type
+- Implemented `html(data: string, status?: number): Response` — returns `text/html` content type
+- Implemented `redirect(url: string, status?: 301 | 302): Response` — returns null body with `Location` header, defaults to 302
+- Made `_status` private with a public getter (`get status(): number`) — backing field pattern
+- All methods accept optional status parameter (defaults to 200, redirect defaults to 302)
+
+**Design decisions:**
+- Redirect status is constrained to `301 | 302` union type — explicit, no arbitrary codes
+- Encapsulation enforced: consumers read status via getter, cannot mutate it externally
+- Each method sets `_status` internally before constructing the Response
+
+---
+
+### Task 10: ClaireRequest — Encapsulation & Headers ✅
+**Commits:** `ab309c0`, `aa61595`, `977fcab`
+
+**What was done:**
+- Made `params` private (`_params`) with a public getter — backing field pattern applied consistently
+- Added `headers` getter — returns `Object.fromEntries(this.raw.headers)` as `Record<string, string>`
+- Added `method` getter — exposes `_method` (was missing from initial implementation)
+
+**Design decisions:**
+- All fields on ClaireRequest now follow backing field pattern (`_field` + getter) — no public mutable fields
+- `headers` returns all request headers (full network tab view), consumer decides what they need
+- Single-value headers only (same as `query`) — multi-value variant can be added later if needed
+
+---
+
+### Task 11: Explicit Return Types — All Classes ✅
+**Commits:** `f870f45`, `aa97d6a`, `61b92e5`
+
+**What was done:**
+- ClaireRequest: typed all getters and methods (`get url(): URL`, `get pathname(): string`, `get params(): Record<string, string>`, `get query(): Record<string, string>`, `get queries(): Record<string, string[]>`, `get headers(): Record<string, string>`, `get method(): string`, `async json(): Promise<unknown>`, `async text(): Promise<string>`)
+- ClaireResponse: typed all methods with `: Response` return type, getter with `: number`
+- ClaireRouter: typed all methods with `: void` (register, get, post, patch, put, delete)
+
+**Design decisions:**
+- ClaireX philosophy: explicit types only, no type inference — "like Java"
+- If the framework enforces explicit typing for users, the framework itself must lead by example
+- Rule of thumb: trace the return value back to its source to determine the type (field type, constructor type, or resolved promise type)
+
+---
+
+### Task 12: Integration Test — POST Endpoint & Body Parsing ✅
+**Commits:** `b071ebb`
+
+**What was done:**
+- Added POST `/` route to example app that parses JSON body
+- Uses `await c.request.json()` to read request body
+- Pushes new user to in-memory array, returns updated list
+- Verified working — POST requests correctly parse and respond with JSON
+
+**Observations:**
+- `json()` returns `Promise<unknown>` — destructuring/assigning to typed objects causes TS errors
+- This is expected: TypeScript cannot know runtime body shape at compile time
+- Temporary workaround: type assertion (`as`) at the call site
+- Proper solution: `ClaireValidator` will bridge runtime validation with compile-time types
+
+---
+
 ## Remaining Tasks
 
 These tasks represent the next features to implement.
 
 ---
 
-### Task 8: ClaireRequest — Query String Parsing
-**Relates to:** US-3 (Typed Request Context)  
-**Dependencies:** Task 4
-
-**What to do:**
-- Add a `query` getter to ClaireRequest that parses `URLSearchParams` into an object
-- Expose parsed query as `Record<string, string>` (or typed later)
-
-**Done when:** `ctx.request.query` returns parsed query params from the URL.
-
----
-
-### Task 9: ClaireRouter — Dynamic Path Parameters (`:id`)
+### Task 13: ClaireRouter — Dynamic Path Parameters (`:id`)
 **Relates to:** US-2 (Class-Based Routing)  
 **Dependencies:** Task 2
 
@@ -165,22 +233,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 10: ClaireResponse — Additional Methods
-**Relates to:** US-7 (Response Builder)  
-**Dependencies:** Task 5
-
-**What to do:**
-- Implement `text(data, status?)` — returns plain text response
-- Implement `html(data, status?)` — returns HTML response
-- Implement `redirect(url, status?)` — returns redirect response
-- Implement `status(code)` for chainable status setting
-- Implement `stream(readable)` — returns streaming response
-
-**Done when:** All response methods return correct `Response` objects with appropriate headers.
-
----
-
-### Task 11: ClaireException — Typed Error Classes
+### Task 14: ClaireException — Typed Error Classes
 **Relates to:** US-8 (Typed Error Handling)  
 **Dependencies:** Task 1
 
@@ -194,9 +247,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 12: ClaireX — 404 Fallback
+### Task 15: ClaireX — 404 Fallback
 **Relates to:** US-8 (Typed Error Handling)  
-**Dependencies:** Task 11
+**Dependencies:** Task 14
 
 **What to do:**
 - If no route matches after the for-loop, return a 404 response
@@ -206,9 +259,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 13: ClaireValidator — Built-in Validation
+### Task 16: ClaireValidator — Built-in Validation
 **Relates to:** US-4 (Built-in Validation)  
-**Dependencies:** Task 11 (needs ClaireException for validation errors)
+**Dependencies:** Task 14 (needs ClaireException for validation errors)
 
 **What to do:**
 - Define `ValidationRule` interface (type, required, min, max, pattern, custom)
@@ -220,7 +273,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 14: ClaireMiddleware — Onion Model
+### Task 17: ClaireMiddleware — Onion Model
 **Relates to:** US-5 (Middleware)  
 **Dependencies:** Task 6 (needs ClaireContext)
 
@@ -234,9 +287,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 15: RouterGroup — Prefix + Scoped Middleware
+### Task 18: RouterGroup — Prefix + Scoped Middleware
 **Relates to:** US-9 (Route Groups)  
-**Dependencies:** Task 14, Task 9
+**Dependencies:** Task 17, Task 13
 
 **What to do:**
 - Implement `RouterGroup` class with prefix and scoped middleware
@@ -248,7 +301,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 16: Plugin System — IPlugin Interface
+### Task 19: Plugin System — IPlugin Interface
 **Relates to:** US-10 (Plugin System)  
 **Dependencies:** Task 3
 
@@ -261,9 +314,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 17: Typed Handler Enforcement
+### Task 20: Typed Handler Enforcement
 **Relates to:** US-6 (Typed Handler Signatures)  
-**Dependencies:** Task 13 (needs validator for type connection)
+**Dependencies:** Task 16 (needs validator for type connection)
 
 **What to do:**
 - Replace `Function` type on RouterEntry with a generic `ClaireHandler<TParams, TQuery, TBody>` type
@@ -274,7 +327,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 18: Documentation & Hackathon Submission
+### Task 21: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -299,14 +352,17 @@ These tasks represent the next features to implement.
 | 5 | ClaireResponse — json() | ✅ Done |
 | 6 | ClaireContext — Composition | ✅ Done |
 | 7 | Integration Test — Basic GET | ✅ Done |
-| 8 | ClaireRequest — Query Parsing | ⬜ Next |
-| 9 | ClaireRouter — Dynamic Params | ⬜ Next |
-| 10 | ClaireResponse — More Methods | ⬜ Pending |
-| 11 | ClaireException — Error Classes | ⬜ Pending |
-| 12 | ClaireX — 404 Fallback | ⬜ Pending |
-| 13 | ClaireValidator — Validation | ⬜ Pending |
-| 14 | ClaireMiddleware — Onion Model | ⬜ Pending |
-| 15 | RouterGroup — Prefixes | ⬜ Pending |
-| 16 | Plugin System | ⬜ Pending |
-| 17 | Typed Handler Enforcement | ⬜ Pending |
-| 18 | Documentation & Submission | ⬜ Final |
+| 8 | ClaireRequest — Query Parsing | ✅ Done |
+| 9 | ClaireResponse — Additional Methods | ✅ Done |
+| 10 | ClaireRequest — Encapsulation & Headers | ✅ Done |
+| 11 | Explicit Return Types — All Classes | ✅ Done |
+| 12 | Integration Test — POST & Body Parsing | ✅ Done |
+| 13 | ClaireRouter — Dynamic Params | ⬜ Next |
+| 14 | ClaireException — Error Classes | ⬜ Pending |
+| 15 | ClaireX — 404 Fallback | ⬜ Pending |
+| 16 | ClaireValidator — Validation | ⬜ Pending |
+| 17 | ClaireMiddleware — Onion Model | ⬜ Pending |
+| 18 | RouterGroup — Prefixes | ⬜ Pending |
+| 19 | Plugin System | ⬜ Pending |
+| 20 | Typed Handler Enforcement | ⬜ Pending |
+| 21 | Documentation & Submission | ⬜ Final |
