@@ -4,11 +4,15 @@ import { matchRoute } from "./utils";
 export class ClaireX extends ClaireRouter {
   private port;
 
-  private middlewareChain = [];
+  private _middlewareChain: unknown[] = [];
 
   constructor(port?: number) {
     super();
     this.port = port ?? 3000;
+  }
+
+  use (middleware: unknown): void {
+    this._middlewareChain.push(middleware);
   }
 
   listen() {
