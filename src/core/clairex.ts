@@ -43,6 +43,11 @@ export class ClaireX extends ClaireRouter {
           // 2. Call the handler
           const response = route.handler(context);
 
+          // 3. the after loop (reverse)
+          for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
+            this._middlewareChain[i]?.after(context, response);
+          }
+
           return response;
           // return route.handler(context);
         }
