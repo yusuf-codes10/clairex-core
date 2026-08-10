@@ -1,13 +1,7 @@
-import  { ClaireContext } from '../core/context';
-import type { ClaireResponse } from './response';
-
+import { ClaireContext } from "../core/context";
 export abstract class ClaireMiddleware {
-
-    protected before (c: ClaireContext) {
-
-    }
-
-    protected after (c: ClaireContext, response: ClaireResponse ) {
-
-    }
+  before(ctx: ClaireContext): void | Response {}
+  after(ctx: ClaireContext, response: Response): Response {
+    return response;
+  }
 }
