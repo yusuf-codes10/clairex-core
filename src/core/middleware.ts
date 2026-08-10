@@ -1,4 +1,4 @@
-import { ClaireContext } from "../core/context";
+import { ClaireContext } from "./context";
 export abstract class ClaireMiddleware {
   before(ctx: ClaireContext): void | Response | Promise<void | Response> {}
   after(ctx: ClaireContext, response: Response): Response | Promise<Response> {
