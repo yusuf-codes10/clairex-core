@@ -4,6 +4,8 @@ import { matchRoute } from "./utils";
 export class ClaireX extends ClaireRouter {
   private port;
 
+  private middlewareChain = [];
+
   constructor(port?: number) {
     super();
     this.port = port ?? 3000;
