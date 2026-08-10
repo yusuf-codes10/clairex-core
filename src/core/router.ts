@@ -1,3 +1,5 @@
+import { ClaireController } from "./controller";
+
 type RouterEntry = {
     method: string,
     pattern: string,
@@ -33,5 +35,9 @@ export class ClaireRouter {
 
     get routes() {
         return this._routes;
+    }
+
+    mount(controller: ClaireController) {
+        this._routes.push(...controller.router);
     }
 }
