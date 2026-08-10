@@ -38,6 +38,7 @@ export class ClaireX extends ClaireRouter {
           for (const middleware of this._middlewareChain) {
             const early = middleware.before(context);
             // check if that before returns a Response or not
+            // TODO: might have an option to call after() in a short cicuit
             if (early instanceof Response) return early;
           }
           // 2. Call the handler
