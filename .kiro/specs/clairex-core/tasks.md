@@ -213,27 +213,115 @@ example/
 
 ---
 
+### Task 13: ClaireRouter — Dynamic Path Parameters (`:id`) ✅
+**Commits:** `d0c10ce`, `3b3a5aa`, `29512e9`, `2e08e3c`
+
+**What was done:**
+- Implemented `matchRoute()` utility function in `src/core/utils.ts`
+- Splits route pattern and request path by `/`, filters empty segments
+- Length check: if segment counts differ, no match (returns `null`)
+- Segment-by-segment comparison: `:param` segments extract values, static segments must match exactly
+- Returns `Record<string, string>` of extracted params on match, `null` on no match
+- Integrated into ClaireX's `fetch` handler — replaces simple pathname equality check
+- Params assigned to `context.request.params` after match (currently via public setter — pragmatic solution)
+
+**Design decisions:**
+- `matchRoute` is a standalone utility (pure function, no class) — lives in `utils.ts`
+- `filter(Boolean)` handles trailing/leading slashes gracefully
+- Defensive guard for `noUncheckedIndexedAccess` — `if (!routePart || !pathPart) return null`
+- Explicit return type: `Record<string, string> | null`
+- Params setter is a temporary pragmatic solution — to be resolved with ClaireMiddleware or constructor refactor
+
+**Known issue:**
+- `params` is temporarily public on ClaireRequest to allow assignment after context creation
+- Ideal solution: pass params at construction time or resolve via middleware layer
+
+---
+
+### Task 14: ClaireRouter — Routes Getter & Mount Method ✅
+**Commits:** `2b7430c`, `d5d5e9f`
+
+**What was done:**
+- Added `get routes(): RouterEntry[]` getter on ClaireRouter — exposes `_routes` array (renamed from `routes` to `_routes`)
+- Implemented `mount(controller: ClaireController): void` method on ClaireRouter
+- Uses spread operator (`...controller.router`) to push individual entries, not the array itself
+- `mount` lives on ClaireRouter (not ClaireX) so any router-level construct can mount controllers
+
+**Design decisions:**
+- `mount` on ClaireRouter rather than ClaireX — since ClaireX extends ClaireRouter, it inherits the method, and future RouterGroups could also mount controllers
+- Spread operator required because `push()` expects individual items, not an array argument
+- Getter for routes follows ClaireX style: derived state = getter
+
+---
+
+### Task 15: ClaireController — Class-Based Controllers ✅
+**Commits:** `03917d4`, `7beb838`, `7278ccd`, `b5e2eb8`, `a7192f7`, `bd72924`, `5058b06`, `e0c4ac7`
+
+**What was done:**
+- Implemented abstract `ClaireController` class with `prefix` and internal `_router: ClaireRouter`
+- `protected abstract register(): void` — contract: subclasses must define their routes
+- `protected routes(method, path, handler): void` — helper that composes prefix + path and binds handler to `this`
+- `get router(): RouterEntry[]` — exposes controller's registered routes for mounting
+- `register()` called in base constructor after prefix is set — routes are ready at instantiation
+- Extracted `RouterEntry` type into `src/core/types.ts` for reusability across modules
+- Typed all methods and getters with explicit return types
+
+**Design decisions:**
+- Template method pattern: base class calls `register()`, subclass implements it
+- `register()` called in constructor — guarantees routes exist the moment you `new` a controller
+- `handler.bind(this)` in `routes()` — ensures handler methods have correct `this` context when called by the framework
+- `routes()` method constrains HTTP method to union type `'get' | 'post' | 'put' | 'patch' | 'delete'`
+- Prefix composition happens at registration time, not at match time — simpler, no runtime overhead
+- Controller pattern: define routes + handlers in one class per resource — no fat route files, natural organization
+
+**Usage example:**
+```typescript
+class UserController extends ClaireController {
+    constructor() { super('/users'); }
+
+    register() {
+        this.routes('get', '/', this.getUsers);
+        this.routes('post', '/', this.createUser);
+    }
+
+    private getUsers(c: ClaireContext) {
+        return c.response.json(users);
+    }
+
+    private async createUser(c: ClaireContext) {
+        const body = (await c.request.json()) as { name: string; age: number };
+        users.push(body);
+        return c.response.json(users);
+    }
+}
+
+// Mount:
+app.mount(new UserController());
+```
+
+---
+
+### Task 16: Types Extraction ✅
+**Commits:** `153c055`
+
+**What was done:**
+- Created `src/core/types.ts` for shared type definitions
+- Moved `RouterEntry` type from `router.ts` to `types.ts`
+- Updated imports in `ClaireRouter` and `ClaireController` to use shared types file
+
+**Design decisions:**
+- Separate types file prevents circular imports as classes reference each other's types
+- Single source of truth for shared types across the framework
+
+---
+
 ## Remaining Tasks
 
 These tasks represent the next features to implement.
 
 ---
 
-### Task 13: ClaireRouter — Dynamic Path Parameters (`:id`)
-**Relates to:** US-2 (Class-Based Routing)  
-**Dependencies:** Task 2
-
-**What to do:**
-- Implement pattern matching for `:param` segments in route patterns
-- Split path and pattern by `/`, compare segment by segment
-- Extract param values from matching segments
-- Pass extracted params into ClaireContext/ClaireRequest
-
-**Done when:** A route like `/users/:id` matches `/users/123` and `ctx.request.params.id === "123"`.
-
----
-
-### Task 14: ClaireException — Typed Error Classes
+### Task 17: ClaireException — Typed Error Classes
 **Relates to:** US-8 (Typed Error Handling)  
 **Dependencies:** Task 1
 
@@ -247,9 +335,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 15: ClaireX — 404 Fallback
+### Task 18: ClaireX — 404 Fallback
 **Relates to:** US-8 (Typed Error Handling)  
-**Dependencies:** Task 14
+**Dependencies:** Task 17
 
 **What to do:**
 - If no route matches after the for-loop, return a 404 response
@@ -259,9 +347,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 16: ClaireValidator — Built-in Validation
+### Task 19: ClaireValidator — Built-in Validation
 **Relates to:** US-4 (Built-in Validation)  
-**Dependencies:** Task 14 (needs ClaireException for validation errors)
+**Dependencies:** Task 17 (needs ClaireException for validation errors)
 
 **What to do:**
 - Define `ValidationRule` interface (type, required, min, max, pattern, custom)
@@ -273,7 +361,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 17: ClaireMiddleware — Onion Model
+### Task 20: ClaireMiddleware — Onion Model
 **Relates to:** US-5 (Middleware)  
 **Dependencies:** Task 6 (needs ClaireContext)
 
@@ -287,9 +375,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 18: RouterGroup — Prefix + Scoped Middleware
+### Task 21: RouterGroup — Prefix + Scoped Middleware
 **Relates to:** US-9 (Route Groups)  
-**Dependencies:** Task 17, Task 13
+**Dependencies:** Task 20, Task 13
 
 **What to do:**
 - Implement `RouterGroup` class with prefix and scoped middleware
@@ -301,7 +389,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 19: Plugin System — IPlugin Interface
+### Task 22: Plugin System — IPlugin Interface
 **Relates to:** US-10 (Plugin System)  
 **Dependencies:** Task 3
 
@@ -314,9 +402,9 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 20: Typed Handler Enforcement
+### Task 23: Typed Handler Enforcement
 **Relates to:** US-6 (Typed Handler Signatures)  
-**Dependencies:** Task 16 (needs validator for type connection)
+**Dependencies:** Task 19 (needs validator for type connection)
 
 **What to do:**
 - Replace `Function` type on RouterEntry with a generic `ClaireHandler<TParams, TQuery, TBody>` type
@@ -327,7 +415,7 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 21: Documentation & Hackathon Submission
+### Task 24: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -357,12 +445,15 @@ These tasks represent the next features to implement.
 | 10 | ClaireRequest — Encapsulation & Headers | ✅ Done |
 | 11 | Explicit Return Types — All Classes | ✅ Done |
 | 12 | Integration Test — POST & Body Parsing | ✅ Done |
-| 13 | ClaireRouter — Dynamic Params | ⬜ Next |
-| 14 | ClaireException — Error Classes | ⬜ Pending |
-| 15 | ClaireX — 404 Fallback | ⬜ Pending |
-| 16 | ClaireValidator — Validation | ⬜ Pending |
-| 17 | ClaireMiddleware — Onion Model | ⬜ Pending |
-| 18 | RouterGroup — Prefixes | ⬜ Pending |
-| 19 | Plugin System | ⬜ Pending |
-| 20 | Typed Handler Enforcement | ⬜ Pending |
-| 21 | Documentation & Submission | ⬜ Final |
+| 13 | ClaireRouter — Dynamic Params | ✅ Done |
+| 14 | ClaireRouter — Routes Getter & Mount | ✅ Done |
+| 15 | ClaireController — Class-Based Controllers | ✅ Done |
+| 16 | Types Extraction | ✅ Done |
+| 17 | ClaireException — Error Classes | ⬜ Next |
+| 18 | ClaireX — 404 Fallback | ⬜ Pending |
+| 19 | ClaireValidator — Validation | ⬜ Pending |
+| 20 | ClaireMiddleware — Onion Model | ⬜ Pending |
+| 21 | RouterGroup — Prefixes | ⬜ Pending |
+| 22 | Plugin System | ⬜ Pending |
+| 23 | Typed Handler Enforcement | ⬜ Pending |
+| 24 | Documentation & Submission | ⬜ Final |
