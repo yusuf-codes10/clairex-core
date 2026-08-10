@@ -34,6 +34,7 @@ export class ClaireX extends ClaireRouter {
 
           return route.handler(context);
         }
+        return new Response('Not Found!', {status: 404});
       },
     });
 
