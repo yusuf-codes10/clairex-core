@@ -1,17 +1,18 @@
 import { ClaireRouter } from "./router";
 import { ClaireContext } from "./context";
 import { matchRoute } from "./utils";
+import { ClaireMiddleware } from "./middleware";
 export class ClaireX extends ClaireRouter {
   private port;
 
-  private _middlewareChain: unknown[] = [];
+  private _middlewareChain: ClaireMiddleware[] = [];
 
   constructor(port?: number) {
     super();
     this.port = port ?? 3000;
   }
 
-  use (middleware: unknown): void {
+  use (middleware: ClaireMiddleware): void {
     this._middlewareChain.push(middleware);
   }
 
