@@ -1,4 +1,5 @@
 import { ClaireRouter } from "./router";
+import type { RouterEntry } from "./types";
 
 export abstract class ClaireController {
     protected _router = new ClaireRouter();
@@ -19,7 +20,7 @@ export abstract class ClaireController {
         this._router[method](`${this.prefix}${path}`, handler.bind(this));
     }
 
-    get router() {
+    get router(): RouterEntry[] {
         return this._router.routes;
     }
 }

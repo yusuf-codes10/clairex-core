@@ -1,4 +1,5 @@
 import { ClaireController } from "./controller";
+import type { RouterEntry } from "./types";
 
 export class ClaireRouter {
     protected _routes: RouterEntry [] = [];
