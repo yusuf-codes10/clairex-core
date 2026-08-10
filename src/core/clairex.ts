@@ -35,6 +35,14 @@ export class ClaireX extends ClaireRouter {
 
           return route.handler(context);
         }
+
+        // check and loop throught the middleware
+        for (const middleware of this._middlewareChain) {
+          const early = middleware.before(context);
+          // check if that before returns a Response or not
+          if (early instanceof Response) return early;
+
+        }
         return new Response('Not Found!', {status: 404});
       },
     });
