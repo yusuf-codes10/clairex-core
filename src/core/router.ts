@@ -28,11 +28,11 @@ export class ClaireRouter {
         this.register('DELETE', path, handler);
     }
 
-    get routes() {
+    get routes(): RouterEntry[]  {
         return this._routes;
     }
 
-    mount(controller: ClaireController) {
+    mount(controller: ClaireController): void {
         this._routes.push(...controller.router);
     }
 }
