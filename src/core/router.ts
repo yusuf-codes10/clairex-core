@@ -1,30 +1,30 @@
 import { ClaireController } from "./controller";
-import type { RouterEntry } from "./types";
+import type { RouterEntry, ClaireHandler } from "./types";
 
 export class ClaireRouter {
     protected _routes: RouterEntry [] = [];
 
-    private register (method: string, path: string, handler: Function): void {
+    private register (method: string, path: string, handler: ClaireHandler): void {
         this._routes.push({method, pattern: path, handler});
     }
 
-    get (path: string, handler: Function): void {
+    get (path: string, handler: ClaireHandler): void {
         this.register('GET', path, handler);
     }
 
-    post (path: string, handler: Function): void {
+    post (path: string, handler: ClaireHandler): void {
         this.register('POST', path, handler);
     }
 
-    patch (path: string, handler: Function): void {
+    patch (path: string, handler: ClaireHandler): void {
         this.register('PATCH', path, handler);
     }
 
-    put (path: string, handler: Function): void {
+    put (path: string, handler: ClaireHandler): void {
         this.register('PUT', path, handler);
     }
 
-    delete (path: string, handler: Function): void {
+    delete (path: string, handler: ClaireHandler): void {
         this.register('DELETE', path, handler);
     }
 

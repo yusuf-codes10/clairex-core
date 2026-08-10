@@ -1,7 +1,7 @@
 import { ClaireRouter } from "./router";
 import { ClaireContext } from "./context";
 import { matchRoute } from "./utils";
-import { ClaireMiddleware } from "./middleware";
+import { ClaireMiddleware } from "./middleware";``
 export class ClaireX extends ClaireRouter {
   private port;
 
