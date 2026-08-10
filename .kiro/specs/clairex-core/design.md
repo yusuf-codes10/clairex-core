@@ -4,52 +4,63 @@
 
 ClaireX-core follows a class-based, OOP architecture where each component is a class that can be instantiated, extended, and overridden. The framework is built on top of Bun.serve and enforces explicit typing at every boundary. The core design philosophy: **types and validation live together, not scattered across files.**
 
+### Two Usage Modes
+
+ClaireX supports two approaches — users can choose based on project needs:
+
+1. **Classic (Hono-like)** — inline routes on the app instance, quick prototyping and testing
+2. **ClaireX-style** — class-based controllers, structured production apps
+
+Both work because `ClaireX extends ClaireRouter` — method helpers AND `mount()` are available directly.
+
 ```
-┌─────────────────────────────────────────────────┐
-│              ClaireX extends ClaireRouter        │
-│         listen() · use() · server()             │
-│    Bun.serve Adapter · Route Match Loop         │
-└──────────────────────┬──────────────────────────┘
-                       │
-              ┌────────▼────────┐
-              │   ClaireRouter  │
-              │ get/post/put/   │
-              │ delete/patch    │
-              │ routes: []      │
-              │ register()      │
-              └───┬─────────┬───┘
-                  │         │
-     ┌────────────▼──┐  ┌──▼───────────────┐
-     │ ClaireContext  │  │ ClaireMiddleware │
-     │ .request       │  │ MiddlewareChain  │
-     │ .response      │  │ before/after     │
-     │ (composition)  │  │ onion model      │
-     └───┬───────┬────┘  └──────────────────┘
-         │       │
-         ▼       ▼
-┌──────────────┐ ┌──────────────┐
-│ClaireRequest │ │ClaireResponse│
-│wraps Request │ │houses response│
-│params/query/ │ │methods: json │
-│body/method/  │ │text/html/    │
-│pathname      │ │redirect/stream│
-└──────────────┘ └──────────────┘
-             │
-   ┌─────────┼──────────────┬──────────────────┐
-   │         │              │                  │
-   ▼         ▼              ▼                  ▼
-┌────────┐ ┌───────────┐ ┌───────────────┐ ┌──────────┐
-│Claire  │ │Claire     │ │Claire         │ │Router    │
-│Handler │ │Validator  │ │Exception      │ │Group     │
-│typed fn│ │body/params│ │typed error    │ │prefix +  │
-│signature│ │query      │ │classes        │ │scoped mw │
-└────────┘ └───────────┘ └───────────────┘ └──────────┘
-                                              │
-                                         ┌────▼─────┐
-                                         │  Plugin  │
-                                         │ IPlugin  │
-                                         │register()│
-                                         └──────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ClaireX extends ClaireRouter                      │
+│              listen() · mount() · get/post/put/patch/delete         │
+│                    Bun.serve Adapter · matchRoute                    │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+     ┌────────▼────────┐  ┌───▼────────┐  ┌───▼──────────────┐
+     │   ClaireRouter   │  │ClaireContext│  │ ClaireController │
+     │ _routes: []       │  │ .request   │  │ abstract class   │
+     │ register() (priv) │  │ .response  │  │ prefix + register│
+     │ get/post/put/etc  │  │(composition)│  │ routes() helper  │
+     │ routes (getter)   │  └──┬──────┬──┘  │ mount() via router│
+     │ mount(controller) │     │      │     └──────────────────┘
+     └──────────────────┘     │      │
+                              │      │
+                    ┌─────────▼┐  ┌──▼───────────┐
+                    │ClaireReq │  │ClaireResponse │
+                    │wraps Req │  │json/text/html │
+                    │params    │  │redirect       │
+                    │query/ies │  │_status+getter │
+                    │headers   │  └───────────────┘
+                    │method    │
+                    │pathname  │
+                    └──────────┘
+                         │
+                    ┌────▼─────┐
+                    │  utils   │
+                    │matchRoute│
+                    └──────────┘
+
+─── Planned ────────────────────────────────────────────────────────────
+
+     ┌──────────────────┐  ┌───────────────┐  ┌──────────────────────┐
+     │ ClaireMiddleware │  │ClaireValidator │  │ ClaireException      │
+     │ before() / after()│  │validate()+rules│  │ typed error classes  │
+     │ onion model      │  │body/params/query│  │ 404/400/401/500      │
+     └──────────────────┘  └───────────────┘  └──────────────────────┘
+
+─── Experimental Branch ────────────────────────────────────────────────
+
+     ┌──────────────────────────────────────────────────────────────┐
+     │  .claire File Extension (Bun.plugin)                         │
+     │  Compiler-level type enforcement · Custom loader/transpiler  │
+     │  Forces explicit typing at the syntax level                  │
+     └──────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -65,31 +76,40 @@ class ClaireX extends ClaireRouter {
   private port: number;
 
   constructor(port?: number);   // Defaults to 3000
-  listen(): void;               // Starts Bun.serve, no args — config is on constructor
+  listen(): void;               // Starts Bun.serve, no args
 }
 ```
 
 **Design Decisions:**
-- **Extends ClaireRouter** (inheritance) — the app IS the router. No separate router to wire up. `app.get()`, `app.post()` etc. are available directly.
-- **Port on constructor, not on `listen()`** — all server config in one place. Future settings (cors, etc.) will also go on the constructor.
-- `listen()` is a no-argument method — it just launches with the pre-configured settings.
-- `fetch` handler: creates a `ClaireContext` per request, loops through `this.routes`, matches by method + pathname, calls the handler with context.
+- **Extends ClaireRouter** (inheritance) — the app IS the router. `app.get()`, `app.post()`, `app.mount()` etc. are available directly.
+- **Port on constructor, not on `listen()`** — all server config in one place.
+- `listen()` is a no-argument method — launches with pre-configured settings.
+- `fetch` handler: creates `ClaireContext` per request, loops `this.routes`, uses `matchRoute()` for dynamic path matching, calls handler with context.
+- Supports both inline routes (classic) AND mounted controllers (ClaireX-style).
+
+**Current lifecycle in `fetch`:**
+```typescript
+fetch: (req: Request) => {
+  const context = new ClaireContext(req);
+  for (const route of this.routes) {
+    if (route.method !== context.request.method) continue;
+    const params = matchRoute(route.pattern, context.request.pathname);
+    if (params === null) continue;
+    context.request.params = params;  // TODO: encapsulation issue
+    return route.handler(context);
+  }
+}
+```
 
 ---
 
 ### 2. ClaireRouter — `src/core/router.ts`
 
-**Responsibility:** Route registration and HTTP method helpers. Stores routes as an array.
+**Responsibility:** Route registration, HTTP method helpers, controller mounting.
 
 ```typescript
-type RouterEntry = {
-  method: string;
-  pattern: string;    // "pattern" internally, "path" from user's perspective
-  handler: Function;
-};
-
 class ClaireRouter {
-  protected routes: RouterEntry[] = [];
+  protected _routes: RouterEntry[] = [];
 
   private register(method: string, path: string, handler: Function): void;
   get(path: string, handler: Function): void;
@@ -97,21 +117,23 @@ class ClaireRouter {
   put(path: string, handler: Function): void;
   patch(path: string, handler: Function): void;
   delete(path: string, handler: Function): void;
+  get routes(): RouterEntry[];
+  mount(controller: ClaireController): void;
 }
 ```
 
 **Design Decisions:**
 - Routes stored as a **flat array** — simple, iterable, predictable.
-- `routes` is `protected` — ClaireX inherits and accesses it for the match loop.
+- `_routes` is `protected` with a `routes` getter — ClaireX accesses via inheritance.
 - `register()` is **private** — only HTTP method helpers are the public API.
-- Naming distinction: user calls it a "path", framework stores it as "pattern" (internal language vs user language).
-- `handler` is `Function` for now — will be replaced with typed `ClaireHandler<T>` later.
+- `mount()` spreads controller routes into `_routes` — controllers integrate seamlessly.
+- Naming: user calls it "path", framework stores it as "pattern".
 
 ---
 
 ### 3. ClaireContext — `src/core/context.ts`
 
-**Responsibility:** Composes ClaireRequest + ClaireResponse. One instance per incoming request. Passed to the user's handler.
+**Responsibility:** Composes ClaireRequest + ClaireResponse. One instance per incoming request.
 
 ```typescript
 class ClaireContext {
@@ -123,22 +145,21 @@ class ClaireContext {
 ```
 
 **Design Decisions:**
-- **Composition, not inheritance** — context doesn't extend Request or Response. It holds them.
-- Unlike **Express** (`req, res` as separate args — weird because you're "given" a response before knowing what to respond with).
-- Unlike **Hono** (response methods sit directly on the context — mixes concerns).
-- **ClaireX approach:** `ctx.request` for reading, `ctx.response` for building. Clear separation.
-- Fresh ClaireResponse per request — "response is something you build, not something handed to you pre-filled."
+- **Composition, not inheritance** — context holds request + response, doesn't extend them.
+- Unlike Express (`req, res` as separate args) or Hono (response methods on context).
+- ClaireX approach: `ctx.request` for reading, `ctx.response` for building. Clear separation.
+- Fresh ClaireResponse per request — "response is something you build."
 
 ---
 
 ### 4. ClaireRequest — `src/core/request.ts`
 
-**Responsibility:** Wraps native Bun `Request`. Provides typed access to method, URL, pathname, params, and body parsing.
+**Responsibility:** Wraps native Bun `Request`. Provides typed access to method, URL, pathname, params, query, headers, and body parsing.
 
 ```typescript
 class ClaireRequest {
   private raw: Request;
-  public params: Record<string, string>;
+  public params: Record<string, string>;   // TODO: encapsulate
   private _method: string;
   private _url: URL;
 
@@ -150,84 +171,193 @@ class ClaireRequest {
   get method(): string;
   get url(): URL;
   get pathname(): string;
+  get query(): Record<string, string>;
+  get queries(): Record<string, string[]>;
+  get headers(): Record<string, string>;
 }
 ```
 
 **Design Decisions:**
-- **Backing field pattern** — `private _method` + `get method()` for encapsulation. Follows the JS ecosystem convention (not Java-style `getMethod()`).
-- Getters are **effectively readonly** — no setters defined, TypeScript prevents assignment.
-- `json()` and `text()` delegate to native `Request` methods — async because body is a stream (one-shot read).
-- `params` is public for now (will be typed generically later).
-- `pathname` getter provides clean access without exposing the full URL object.
+- **Backing field pattern** — `private _field` + `get field()` for encapsulation.
+- **Getters for derived state** — ClaireX style: getters = reading state (like Vue computed), methods = actions.
+- `query` returns single-value (`Record<string, string>`), `queries` returns multi-value (`Record<string, string[]>`).
+- `headers` returns all request headers as `Record<string, string>`.
+- `json()` returns `Promise<unknown>` — intentionally. Runtime body shape is unknown without validation.
+- `params` is **temporarily public** — pragmatic solution until ClaireMiddleware or constructor refactor seals it.
 
 ---
 
 ### 5. ClaireResponse — `src/core/response.ts`
 
-**Responsibility:** Houses response-building methods. Returns native `Response` objects that Bun.serve expects.
+**Responsibility:** Houses response-building methods. Returns native `Response` objects.
 
 ```typescript
 class ClaireResponse {
-  private status: number;
+  private _status: number;
 
   constructor(status?: number);   // Defaults to 200
 
   json(data: unknown, status?: number): Response;
+  text(data: string, status?: number): Response;
+  html(data: string, status?: number): Response;
+  redirect(url: string, status?: 301 | 302): Response;
+
+  get status(): number;
 }
 ```
 
 **Design Decisions:**
-- **Not a builder pattern** (yet) — methods directly return `Response` objects.
-- Response methods live on their own class, NOT directly on ClaireContext — separation of concerns.
-- Returns **native `Response`** — Bun.serve's `fetch` expects this, no custom wrapper.
-- Status can be overridden per-method call (default 200).
-- Future methods: `text()`, `html()`, `redirect()`, `stream()`.
+- `_status` private with getter — backing field pattern, encapsulated.
+- All methods accept optional status override (defaults to 200, redirect defaults to 302).
+- `redirect()` constrained to `301 | 302` union — explicit, no arbitrary codes.
+- Returns native `Response` — Bun.serve expects this.
 
 ---
 
-### 6. ClaireHandler (Planned)
+### 6. ClaireController — `src/core/controller.ts`
 
-**Responsibility:** Typed function signature for route handlers. Replaces `Function` type.
-
-```typescript
-// Current (working, untyped):
-type Handler = (ctx: ClaireContext) => Response | Promise<Response>;
-
-// Future (enforced explicit types):
-type ClaireHandler<TParams, TQuery, TBody = never> = (
-  ctx: ClaireContext<TParams, TQuery, TBody>
-) => Response | Promise<Response>;
-```
-
-**Design Decisions:**
-- All type parameters will be **required** — no implicit `any`, no defaults that hide missing types.
-- Return type is always `Response | Promise<Response>` — explicit and predictable.
-- This is the enforcement mechanism for ClaireX's "no inference" philosophy.
-
----
-
-### 7. ClaireValidator (Planned)
-
-**Responsibility:** Built-in validation for body, params, and query — no external libraries.
+**Responsibility:** Abstract base class for class-based route controllers. Template method pattern.
 
 ```typescript
-abstract class ClaireValidator<T> {
-  abstract validate(data: unknown): T;
-  abstract rules(): ValidationRules<T>;
+abstract class ClaireController {
+  protected _router: ClaireRouter;
+  protected prefix: string;
+
+  constructor(prefix: string);
+
+  protected abstract register(): void;
+  protected routes(method: 'get'|'post'|'put'|'patch'|'delete', path: string, handler: Function): void;
+  get router(): RouterEntry[];
 }
 ```
 
 **Design Decisions:**
-- Class-based — extend `ClaireValidator` and define `rules()` for your shape.
-- Validation and type definition **colocated in the same class** — the core philosophy.
-- `validate()` returns typed output or throws `ClaireException`.
-- No Zod, no Yup, no Joi. Zero external dependencies.
+- **Template method pattern** — base class calls `register()` in constructor, subclass implements it.
+- `register()` called after prefix is set — guarantees routes exist at instantiation.
+- `routes()` helper composes prefix + path, binds handler to `this` (preserves context for private methods).
+- `router` getter exposes registered routes for `mount()` consumption.
+- Method union type `'get'|'post'|'put'|'patch'|'delete'` — constrained, explicit.
+- One controller per resource — natural organization, no fat route files.
+
+**Usage pattern:**
+```typescript
+class UserController extends ClaireController {
+    constructor() { super('/users'); }
+    register() {
+        this.routes('get', '/', this.getUsers);
+        this.routes('post', '/', this.createUser);
+    }
+    private getUsers(c: ClaireContext) { return c.response.json(users); }
+    private async createUser(c: ClaireContext) { /* ... */ }
+}
+app.mount(new UserController());
+```
 
 ---
 
-### 8. ClaireException (Planned)
+### 7. Types — `src/core/types.ts`
 
-**Responsibility:** Typed error classes for predictable, structured error handling.
+**Responsibility:** Shared type definitions to prevent circular imports.
+
+```typescript
+type RouterEntry = {
+  method: string;
+  pattern: string;
+  handler: Function;
+}
+```
+
+---
+
+### 8. Utils — `src/core/utils.ts`
+
+**Responsibility:** Pure utility functions used by the framework internals.
+
+```typescript
+const matchRoute = (route: string, path: string): Record<string, string> | null;
+```
+
+**Design Decisions:**
+- `matchRoute` is a pure function, not a class — utilities don't need OOP overhead.
+- Splits by `/`, filters empty segments (handles trailing/leading slashes).
+- `:param` segments extract values, static segments must match exactly.
+- Length mismatch = no match. Returns `null` or extracted params object.
+- Defensive guard for `noUncheckedIndexedAccess`.
+
+---
+
+## Known Open Problems
+
+### Problem 1: `params` Encapsulation
+
+**Current state:** `params` is public on ClaireRequest because it's assigned *after* context creation in the `fetch` handler (match must happen before params are known).
+
+**Root cause:** ClaireContext is created before routing, but params are only available after matching.
+
+**Potential solutions:**
+- ClaireMiddleware sets params internally (framework-level, not user-accessible)
+- Refactor to create ClaireContext after matching (pass params at construction)
+- Setter with restricted access
+
+---
+
+### Problem 2: Body Typing (`unknown` problem)
+
+**Current state:** `c.request.json()` returns `Promise<unknown>`. TypeScript cannot know the shape of runtime data. Users must use type assertions (`as`) — which provide zero runtime safety.
+
+**Root cause:** Compile-time types cannot guarantee runtime data shape. This is fundamentally a validation problem, not a typing problem.
+
+**The real solution:** ClaireValidator — validates at runtime, provides typed output. The framework bridges the gap between `unknown` and `T`.
+
+---
+
+## Planned: ClaireMiddleware (Branch 1)
+
+**Purpose:** Request/response transformation, onion-model middleware chain.
+
+**Solves:**
+- Params encapsulation (middleware can set params before handler receives context)
+- Validation pipeline (validation middleware runs before handler)
+- Cross-cutting concerns (auth, logging, CORS, etc.)
+
+```typescript
+abstract class ClaireMiddleware {
+  abstract before(ctx: ClaireContext): Promise<void | Response> | void | Response;
+  abstract after(ctx: ClaireContext, response: Response): Promise<Response> | Response;
+}
+```
+
+**Expected behavior:**
+- `before()` runs outside-in before the handler
+- `after()` runs inside-out after the handler
+- `before()` can short-circuit by returning a Response directly
+- Global middleware via `app.use()`, scoped via controllers/groups
+
+---
+
+## Planned: .claire File Extension (Branch 2 — Experimental)
+
+**Purpose:** Compiler-level enforcement of ClaireX's "explicit types" philosophy via a custom Bun plugin.
+
+**Concept:**
+- `.claire` files are a superset/subset of TypeScript
+- Bun.plugin registers a custom loader that transpiles `.claire` → `.ts`
+- The loader/compiler rejects code that doesn't meet ClaireX typing standards
+- Forces explicit type annotations at the syntax level — not just linting, but compilation failure
+
+**What it could enforce:**
+- All handler params must have explicit types (no inference)
+- Body access must go through a validator (no raw `.json()` in handlers)
+- Controller methods must declare return types
+- Route params must be typed explicitly
+
+**Risk:** High complexity, uncertain timeline. Branched separately — if it doesn't work, roll back to main.
+
+---
+
+## Planned: ClaireException
+
+**Purpose:** Typed error classes for structured error handling.
 
 ```typescript
 class ClaireException extends Error {
@@ -243,95 +373,72 @@ class UnauthorizedException extends ClaireException { /* 401 */ }
 class InternalException extends ClaireException { /* 500 */ }
 ```
 
-**Design Decisions:**
-- Extends native `Error` — works with try/catch and stack traces.
-- Global exception handler in ClaireX catches unhandled exceptions → structured JSON response.
-- Metadata for attaching validation errors, debug info, etc.
+**Integrates with:**
+- ClaireX `fetch` handler catches unhandled exceptions → structured JSON response
+- ClaireValidator throws `ValidationException` on invalid data
+- 404 fallback when no route matches
 
 ---
 
-### 9. ClaireMiddleware (Planned)
+## Planned: ClaireValidator
 
-**Responsibility:** Request/response transformation via onion-model middleware chain.
+**Purpose:** Built-in validation that bridges runtime data and compile-time types.
 
 ```typescript
-abstract class ClaireMiddleware {
-  abstract before(ctx: ClaireContext): Promise<void> | void;
-  abstract after(ctx: ClaireContext): Promise<void> | void;
+abstract class ClaireValidator<T> {
+  abstract rules(): ValidationRules<T>;
+  validate(data: unknown): T;  // Returns typed T or throws ValidationException
 }
 ```
 
-**Design Decisions:**
-- Abstract class — developers extend and override `before()` / `after()`.
-- Onion model: before hooks outside-in, after hooks inside-out.
-- Can short-circuit in `before()` (return early response to skip handler).
+**The core value proposition:** Validation and type definition colocated in the same class. No Zod, no Yup — ClaireX IS the validation layer.
 
 ---
 
-### 10. RouterGroup (Planned)
+## Request Lifecycle
 
-**Responsibility:** Group routes under a shared prefix with scoped middleware.
-
-```typescript
-class RouterGroup {
-  private prefix: string;
-  private middlewares: ClaireMiddleware[];
-
-  use(middleware: ClaireMiddleware): void;
-  get(path: string, handler: Function): void;
-  // ... other HTTP methods
-}
+### Current (Implemented):
+```
+Request (Bun.serve)
+    │
+    ▼
+new ClaireContext(req)
+├── new ClaireRequest(req)
+└── new ClaireResponse()
+    │
+    ▼
+for each route:
+├── method mismatch? → continue
+├── matchRoute(pattern, pathname) → null? → continue
+├── MATCH → set params → handler(context) → Response
+└── no match → undefined (TODO: 404)
 ```
 
-**Design Decisions:**
-- Prefix prepended to all routes in the group.
-- Scoped middleware only affects routes within that group.
-- Nestable — group within a group, prefixes concatenate.
-
----
-
-### 11. Plugin — IPlugin Interface (Planned)
-
-**Responsibility:** Extensibility — modular features hook into the framework.
-
-```typescript
-interface IPlugin {
-  name: string;
-  register(app: ClaireX): void;
-}
+### Future (With Middleware + Validation + Error Handling):
 ```
-
-**Design Decisions:**
-- Minimal interface — just `name` and `register()`.
-- Plugins receive the app instance → can add routes, middleware, etc.
-- Core stays lightweight; optional features are plugins.
-
----
-
-## Request Lifecycle (Current Implementation)
-
-```
-Incoming HTTP Request (Bun.serve fetch callback)
-       │
-       ▼
-  new ClaireContext(req)
-  ├── new ClaireRequest(req)    → wraps native Request
-  └── new ClaireResponse()      → fresh, default status 200
-       │
-       ▼
-  for (const route of this.routes)
-  ├── route.method !== ctx.request.method? → continue (skip)
-  ├── route.pattern !== ctx.request.pathname? → continue (skip)
-  └── MATCH → return route.handler(context)
-       │
-       ▼
-  Handler executes (user code)
-  └── return ctx.response.json(data)  → native Response returned to Bun
-```
-
-**Future lifecycle (with middleware + validation):**
-```
-Request → Context → Middleware (before) → Validate → Handler → Middleware (after) → Response
+Request (Bun.serve)
+    │
+    ▼
+Context Creation + Route Matching
+    │
+    ▼
+Middleware Chain (before — outside-in)
+    │
+    ▼
+Validation (body/params/query)
+    │
+    ▼
+Handler (user code) → Response
+    │
+    ▼
+Middleware Chain (after — inside-out)
+    │
+    ▼
+Response → Bun
+    │
+    ╳ (any point)
+    ▼
+ClaireException caught → structured JSON error response
 ```
 
 ---
@@ -341,14 +448,16 @@ Request → Context → Middleware (before) → Validate → Handler → Middlew
 | Principle | Implementation |
 |-----------|---------------|
 | Explicit over implicit | All types must be declared — no inference, no `any` defaults |
-| Classes over functions | Every component is a class that can be extended/overridden |
-| Composition for context | ClaireContext holds ClaireRequest + ClaireResponse (not inheritance) |
-| Inheritance for core | ClaireX extends ClaireRouter (the app IS the router) |
-| Colocation | Types + validation will live in the same class (ClaireValidator) |
-| Zero external deps | ClaireValidator replaces Zod/Yup/Joi entirely |
-| Bun-native | Built on Bun.serve, uses Bun APIs, targets Bun runtime only |
-| Override-friendly | OOP inheritance lets you customize any framework behavior |
+| Classes over functions | Every component is a class (except pure utils) |
+| Composition for context | ClaireContext holds ClaireRequest + ClaireResponse |
+| Inheritance for core | ClaireX extends ClaireRouter |
+| Template method for controllers | Abstract `register()` called in base constructor |
+| Getters for derived state | Getters = reading (like Vue computed), methods = actions |
 | Backing field pattern | Private `_field` + public getter for encapsulation |
+| Colocation | Types + validation will live in the same class (ClaireValidator) |
+| Zero external deps | No Zod/Yup/Joi — ClaireX IS the validation layer |
+| Bun-native | Built on Bun.serve, targets Bun runtime only |
+| Two usage modes | Classic inline routes OR class-based controllers |
 | Response as construction | You build responses, not receive pre-filled ones |
 
 ---
@@ -356,8 +465,29 @@ Request → Context → Middleware (before) → Validate → Handler → Middlew
 ## Technology Stack
 
 - **Runtime:** Bun
-- **Language:** TypeScript (strict mode, no implicit any, noImplicitOverride)
+- **Language:** TypeScript (strict mode, `noImplicitAny`, `noImplicitOverride`, `noUncheckedIndexedAccess`)
 - **Server:** Bun.serve
 - **Build:** Not required for development (Bun runs TS natively). Build step only for publishing.
 - **Testing:** Manual via `example/` directory (Bun test runner for future unit tests)
 - **Dependencies:** Zero runtime dependencies (framework is self-contained)
+
+---
+
+## File Structure (Current)
+
+```
+src/
+├── core/
+│   ├── clairex.ts       — ClaireX class (app entry, extends ClaireRouter)
+│   ├── context.ts       — ClaireContext (composition of request + response)
+│   ├── controller.ts    — ClaireController (abstract base for class-based controllers)
+│   ├── request.ts       — ClaireRequest (wraps native Request)
+│   ├── response.ts      — ClaireResponse (response builder methods)
+│   ├── router.ts        — ClaireRouter (route registration + mount)
+│   ├── types.ts         — Shared types (RouterEntry)
+│   └── utils.ts         — Utility functions (matchRoute)
+├── index.ts             — Barrel export
+example/
+├── index.ts             — Classic inline route testing
+└── users.controller.ts  — ClaireController usage example
+```
