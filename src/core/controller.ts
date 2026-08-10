@@ -6,6 +6,7 @@ export abstract class ClaireController {
 
     constructor (prefix: string) {
         this.prefix = prefix;
+        this.register() // have to call the register method after we have the prefix
     }
 
     protected abstract register(): void;

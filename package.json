@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "dev": "bun run src/index.ts",
-    "example": "bun run example/index.ts"
+    "example": "bun run example/index.ts",
+    "app": "bun run example/app.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
