@@ -20,7 +20,7 @@ export class ClaireX extends ClaireRouter {
     Bun.serve({
       port: this.port,
 
-      fetch: (req: Request) => {
+      fetch: async (req: Request) => {
         const context = new ClaireContext(req);
 
         for (const route of this.routes) {
@@ -36,17 +36,17 @@ export class ClaireX extends ClaireRouter {
           // check and loop throught the middleware
           // 1. the before loop
           for (const middleware of this._middlewareChain) {
-            const early = middleware.before(context);
+            const early = await middleware.before(context);
             // check if that before returns a Response or not
             // TODO: might have an option to call after() in a short cicuit
             if (early instanceof Response) return early;
           }
           // 2. Call the handler
-          const response = route.handler(context);
+          const response = await route.handler(context);
 
           // 3. the after loop (reverse)
           for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
-            this._middlewareChain[i]?.after(context, response);
+            await this._middlewareChain[i]?.after(context, response);
           }
 
           return response;
