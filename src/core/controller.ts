@@ -15,7 +15,7 @@ export abstract class ClaireController {
         method: 'get' | 'post' | 'put' | 'patch' | 'delete',
         path: string,
         handler: Function
-    ) {
+    ): void {
         this._router[method](`${this.prefix}${path}`, handler.bind(this));
     }
 

@@ -1,11 +1,5 @@
 import { ClaireController } from "./controller";
 
-type RouterEntry = {
-    method: string,
-    pattern: string,
-    handler: Function
-}
-
 export class ClaireRouter {
     protected _routes: RouterEntry [] = [];
 
