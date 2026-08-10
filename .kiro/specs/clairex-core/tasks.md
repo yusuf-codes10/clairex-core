@@ -321,63 +321,173 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 17: ClaireException — Typed Error Classes
-**Relates to:** US-8 (Typed Error Handling)  
+### Task 17: ClaireHandler Type — Replacing `Function` ✅
+**Commits:** `1645c29`, `7819245`, `ed85e22`
+
+**What was done:**
+- Introduced `ClaireHandler` type in `src/core/types.ts`: `(c: ClaireContext) => Response | Promise<Response>`
+- Replaced generic `Function` type across all files:
+  - `RouterEntry.handler` → `ClaireHandler`
+  - `ClaireRouter` — all HTTP method helpers and private `register()` now accept `ClaireHandler`
+  - `ClaireController.routes()` — handler parameter typed as `ClaireHandler`
+- Explicit return type: handlers must return `Response` or `Promise<Response>` — no more `undefined` possible
+
+**Design decisions:**
+- `ClaireHandler` is a simple type alias (not generic yet) — will become `ClaireHandler<TParams, TQuery, TBody>` later when ClaireValidator exists
+- Supports both sync and async handlers explicitly via union type
+- Zero ambiguity: TypeScript now enforces that every handler returns a Response
+
+---
+
+### Task 18: ClaireMiddleware — Before/After Model ✅
+**Commits:** `0b70a48`, `1aa1212`, `b6f3f77`, `786aaba`, `c313618`, `d44ba96`, `0187f6a`, `9202449`, `af70dff`, `175f70e`, `45a544d`, `024e4e3`, `c2fa515`
+
+**What was done:**
+- Implemented abstract `ClaireMiddleware` class in `src/core/middleware.ts`
+- `before(ctx): void | Response | Promise<void | Response>` — default empty implementation
+- `after(ctx, response): Response | Promise<Response>` — default returns response unchanged
+- Middleware chain (`_middlewareChain: ClaireMiddleware[]`) lives on ClaireX
+- `use(middleware: ClaireMiddleware): void` — pushes to the chain
+- Execution in `fetch` handler:
+  1. Before loop (in order) — `await` each, short-circuit if `instanceof Response`
+  2. Handler call — `await route.handler(context)`
+  3. After loop (reverse order) — onion model
+- `fetch` is now `async` to support await on middlewares and handlers
+- Short-circuit: if `before()` returns a `Response`, handler and after loop are skipped
+
+**Design decisions:**
+- Option B chosen (explicit before/after) over Option A (single handle + next) — fits ClaireX's "explicit over implicit" identity
+- No `next()` function — framework controls the flow, not the middleware
+- Both methods are `public` — ClaireX needs to call them from outside
+- Both have default implementations — class is `abstract` to prevent direct instantiation, but users override only what they need
+- After does NOT run on short-circuit — simpler mental model: "if before stops it, it's stopped"
+- Async-safe: both methods support returning Promises
+
+**Usage example:**
+```typescript
+class AuthGuard extends ClaireMiddleware {
+    override before(c: ClaireContext) {
+        const token = c.request.headers.authorization;
+        if (!token) {
+            return c.response.json({ msg: 'Unauthorized' }, 401);
+        }
+    }
+}
+
+class Logger extends ClaireMiddleware {
+    override before(c: ClaireContext) {
+        console.log(`${c.request.method} ${c.request.pathname}`);
+    }
+}
+
+// Register (order matters):
+app.use(new Logger());
+app.use(new AuthGuard());
+```
+
+---
+
+### Task 19: ClaireX — Basic 404 Fallback ✅
+**Commits:** `2c100c2`
+
+**What was done:**
+- Added `return new Response('Not Found!', {status: 404})` at the end of the route matching loop
+- If no route matches, Bun.serve now returns a proper 404 instead of `undefined`
+
+**Design decisions:**
+- Basic string response for now — will be replaced with structured JSON via ClaireException later
+- Prevents Bun's "Expected a Response object, but received 'undefined'" error
+
+---
+
+### Task 20: Integration Test — Middleware ✅
+**Commits:** `21f5aa1`, `3931fcd`
+
+**What was done:**
+- Created `logger` middleware — logs method and pathname on every request
+- Created `tester` middleware — demonstrates short-circuit: returns JSON response for non-POST requests, logs headers for POST
+- Tested multiple middlewares stacking in order
+- Verified short-circuit: handler is never reached when `before()` returns a Response
+- Verified middleware execution order matches `app.use()` registration order
+
+**Observations:**
+- Middleware is currently global only — applies to all routes
+- Cannot scope middleware per controller or per route (open problem #3)
+
+---
+
+## Open Problems
+
+These are known architectural issues that need solving in upcoming tasks.
+
+---
+
+### Problem 1: ClaireValidator — Body Typing (`unknown`)
+`c.request.json()` returns `Promise<unknown>`. Users must use `as` type assertions with zero runtime safety. ClaireValidator will bridge runtime validation with compile-time types — the framework's core differentiator.
+
+### Problem 2: Params Encapsulation
+`context.request.params = params` is assigned publicly in ClaireX's fetch handler after context creation. Breaks backing field pattern. Needs to be sealed — either via constructor refactor or middleware-level internal access.
+
+### Problem 3: Scoped Middleware
+All middlewares registered via `app.use()` are global — they run on every route. No way to scope middleware per controller or per route. Needs: controller-level `use()`, route-level attachment, or path-based matching.
+
+### Problem 4: Global Error Handling
+No try/catch in `fetch` handler. If a handler or middleware throws, Bun gets an unhandled error. Needs: wrap execution in try/catch, return structured error JSON. Depends on ClaireException for typed error responses.
+
+---
+
+## Remaining Tasks
+
+These tasks represent the next features to implement.
+
+---
+
+### Task 21: ClaireException — Typed Error Classes
+**Relates to:** US-8 (Typed Error Handling), Problem 4  
 **Dependencies:** Task 1
 
 **What to do:**
 - Implement base `ClaireException` class extending `Error`
 - Add `statusCode`, `message`, and optional `metadata`
 - Create pre-built exceptions: `NotFoundException`, `ValidationException`, `UnauthorizedException`, `InternalException`
-- Add global exception handling in ClaireX's `fetch` (catch unhandled errors, return structured JSON)
+- Add global try/catch in ClaireX's `fetch` handler — catch unhandled errors, return structured JSON
 
-**Done when:** Throwing a `ClaireException` in a handler results in a structured JSON error response.
-
----
-
-### Task 18: ClaireX — 404 Fallback
-**Relates to:** US-8 (Typed Error Handling)  
-**Dependencies:** Task 17
-
-**What to do:**
-- If no route matches after the for-loop, return a 404 response
-- Use `ClaireException` or a default JSON error response
-
-**Done when:** Hitting an unregistered path returns a proper 404 JSON response.
+**Done when:** Throwing a `ClaireException` in a handler or middleware results in a structured JSON error response. Unknown errors return generic 500.
 
 ---
 
-### Task 19: ClaireValidator — Built-in Validation
-**Relates to:** US-4 (Built-in Validation)  
-**Dependencies:** Task 17 (needs ClaireException for validation errors)
+### Task 22: ClaireValidator — Built-in Validation
+**Relates to:** US-4 (Built-in Validation), Problem 1  
+**Dependencies:** Task 21 (needs `ValidationException` for errors)
 
 **What to do:**
-- Define `ValidationRule` interface (type, required, min, max, pattern, custom)
+- Define validation rules mechanism (class-based, colocated with types)
 - Implement abstract `ClaireValidator<T>` class with `validate()` and `rules()` methods
 - Validation errors throw `ValidationException` with structured details
-- Integrate with route handlers (validate body/params/query before handler runs)
+- Integrate with route handlers or middleware (validate body/params/query before handler)
+- After validation, data is typed — no more `unknown`, no more `as` assertions
 
-**Done when:** Can define a validator class, attach it to a route, and invalid data is rejected with structured errors.
+**Done when:** Can define a validator class, validate incoming data, and receive fully typed output. Invalid data is rejected with structured errors.
 
 ---
 
-### Task 20: ClaireMiddleware — Onion Model
-**Relates to:** US-5 (Middleware)  
-**Dependencies:** Task 6 (needs ClaireContext)
+### Task 23: Scoped Middleware — Per Controller/Route
+**Relates to:** Problem 3  
+**Dependencies:** Task 18 (ClaireMiddleware), Task 15 (ClaireController)
 
 **What to do:**
-- Implement abstract `ClaireMiddleware` class with `before()` and `after()` methods
-- Implement `MiddlewareChain` that runs before hooks outside-in, after hooks inside-out
-- Support global middleware via `app.use(middleware)`
-- Support short-circuit in `before()` (return early response)
+- Allow controllers to register their own middlewares (scoped to that controller's routes)
+- Possibly: route-level middleware attachment
+- Execution order: global middlewares first, then scoped middlewares
+- ClaireX needs to know which controller a route belongs to (currently lost after `mount()` spreads routes)
 
-**Done when:** Middleware executes in correct onion order around route handlers.
+**Done when:** A middleware registered on a controller only runs for that controller's routes.
 
 ---
 
-### Task 21: RouterGroup — Prefix + Scoped Middleware
+### Task 24: RouterGroup — Prefix + Scoped Middleware
 **Relates to:** US-9 (Route Groups)  
-**Dependencies:** Task 20, Task 13
+**Dependencies:** Task 23, Task 13
 
 **What to do:**
 - Implement `RouterGroup` class with prefix and scoped middleware
@@ -389,25 +499,25 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 22: Plugin System — IPlugin Interface
+### Task 25: Plugin System — IPlugin Interface
 **Relates to:** US-10 (Plugin System)  
 **Dependencies:** Task 3
 
 **What to do:**
 - Define `IPlugin` interface with `name` and `register(app)`
-- Implement plugin registration on ClaireX via `app.use(plugin)`
-- Plugins receive the app instance and can register routes, middleware, etc.
+- Implement plugin registration on ClaireX via `app.register(plugin)`
+- Plugins receive the app instance and can add routes, middleware, etc.
 
 **Done when:** Can create and register a plugin that adds routes to the app.
 
 ---
 
-### Task 23: Typed Handler Enforcement
+### Task 26: Typed Handler Enforcement
 **Relates to:** US-6 (Typed Handler Signatures)  
-**Dependencies:** Task 19 (needs validator for type connection)
+**Dependencies:** Task 22 (needs validator for type connection)
 
 **What to do:**
-- Replace `Function` type on RouterEntry with a generic `ClaireHandler<TParams, TQuery, TBody>` type
+- Evolve `ClaireHandler` to generic: `ClaireHandler<TParams, TQuery, TBody>`
 - Enforce that all type parameters must be explicitly declared (no defaults)
 - Connect handler types with validator types (validator output = handler input types)
 
@@ -415,7 +525,21 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 24: Documentation & Hackathon Submission
+### Task 27: Bun.plugin — .claire File Extension (Experimental)
+**Relates to:** ClaireX differentiator  
+**Dependencies:** Task 22, Task 26
+
+**What to do:**
+- Implement custom Bun.plugin that registers `.claire` file loader
+- Loader transpiles `.claire` → `.ts` with enforcement rules
+- Rejects code that doesn't meet ClaireX typing standards at compile level
+- Forces explicit type annotations, validated body access, typed route params
+
+**Done when:** A `.claire` file can define controllers/handlers with compiler-enforced type safety beyond what TypeScript alone provides.
+
+---
+
+### Task 28: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -449,11 +573,15 @@ These tasks represent the next features to implement.
 | 14 | ClaireRouter — Routes Getter & Mount | ✅ Done |
 | 15 | ClaireController — Class-Based Controllers | ✅ Done |
 | 16 | Types Extraction | ✅ Done |
-| 17 | ClaireException — Error Classes | ⬜ Next |
-| 18 | ClaireX — 404 Fallback | ⬜ Pending |
-| 19 | ClaireValidator — Validation | ⬜ Pending |
-| 20 | ClaireMiddleware — Onion Model | ⬜ Pending |
-| 21 | RouterGroup — Prefixes | ⬜ Pending |
-| 22 | Plugin System | ⬜ Pending |
-| 23 | Typed Handler Enforcement | ⬜ Pending |
-| 24 | Documentation & Submission | ⬜ Final |
+| 17 | ClaireHandler Type | ✅ Done |
+| 18 | ClaireMiddleware — Before/After Model | ✅ Done |
+| 19 | ClaireX — Basic 404 Fallback | ✅ Done |
+| 20 | Integration Test — Middleware | ✅ Done |
+| 21 | ClaireException — Error Classes | ⬜ Next |
+| 22 | ClaireValidator — Validation | ⬜ Pending |
+| 23 | Scoped Middleware | ⬜ Pending |
+| 24 | RouterGroup — Prefixes | ⬜ Pending |
+| 25 | Plugin System | ⬜ Pending |
+| 26 | Typed Handler Enforcement | ⬜ Pending |
+| 27 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 28 | Documentation & Submission | ⬜ Final |
