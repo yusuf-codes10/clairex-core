@@ -4,9 +4,10 @@ export class ClaireException extends Error {
     private _metadata?: Record<string, string>; // might come in handy as debug info
 
     constructor (statusCode: number, content: string) {
-        super();
+        super(content);
         this._statusCode = statusCode;
         this._content = content;
+        this.name = 'ClaireException';
     }
 
     get statusCode(): number {
