@@ -58,7 +58,7 @@ export class ClaireX extends ClaireRouter {
           return new Response("Not Found!", { status: 404 });
         } catch (e) {
           console.log('something went wrong!', e);
-          return new ClaireContext(500,' Internal Server Error' );
+          return new ClaireException(500,' Internal Server Error' ).toResponse();
         }
       },
     });
