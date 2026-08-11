@@ -2,6 +2,7 @@ import { ClaireRouter } from "./router";
 import { ClaireContext } from "./context";
 import { matchRoute } from "./utils";
 import { ClaireMiddleware } from "./middleware";
+import { ClaireException } from "./exception";
 export class ClaireX extends ClaireRouter {
   private port;
 
@@ -57,13 +58,7 @@ export class ClaireX extends ClaireRouter {
           return new Response("Not Found!", { status: 404 });
         } catch (e) {
           console.log('something went wrong!', e);
-          return new Response(
-            JSON.stringify({ error: "Internal Server Error" }),
-            {
-              status: 500,
-              headers: { "Content-Type": "application/json" },
-            },
-          );
+          return new ClaireContext(500,' Internal Server Error' );
         }
       },
     });
