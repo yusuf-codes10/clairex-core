@@ -57,7 +57,7 @@ export class ClaireX extends ClaireRouter {
 
             // 4. the scoped after
             if (route.middlewares) {
-              for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
+              for (let i = route.middlewares.length - 1; i >= 0; i--) {
                 await route.middlewares[i]?.after(context, response);
               }
             }
