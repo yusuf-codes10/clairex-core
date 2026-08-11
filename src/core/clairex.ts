@@ -12,7 +12,7 @@ export class ClaireX extends ClaireRouter {
     this.port = port ?? 3000;
   }
 
-  use (middleware: ClaireMiddleware): void {
+  use(middleware: ClaireMiddleware): void {
     this._middlewareChain.push(middleware);
   }
 
@@ -21,40 +21,50 @@ export class ClaireX extends ClaireRouter {
       port: this.port,
 
       fetch: async (req: Request) => {
-        const context = new ClaireContext(req);
+        try {
+          const context = new ClaireContext(req);
 
-        for (const route of this.routes) {
-          if (route.method !== context.request.method) continue; //skip to next iteration
+          for (const route of this.routes) {
+            if (route.method !== context.request.method) continue; //skip to next iteration
 
-          const params = matchRoute(route.pattern, context.request.pathname);
+            const params = matchRoute(route.pattern, context.request.pathname);
 
-          if (params === null) continue;
+            if (params === null) continue;
 
-          // TODO: we might solve this with ClaireNiddleware or something
-          context.request.params = params;
+            // TODO: we might solve this with ClaireNiddleware or something
+            context.request.params = params;
 
-          // check and loop throught the middleware
-          // 1. the before loop
-          for (const middleware of this._middlewareChain) {
-            const early = await middleware.before(context);
-            // check if that before returns a Response or not
-            // TODO: might have an option to call after() in a short cicuit
-            if (early instanceof Response) return early;
+            // check and loop throught the middleware
+            // 1. the before loop
+            for (const middleware of this._middlewareChain) {
+              const early = await middleware.before(context);
+              // check if that before returns a Response or not
+              // TODO: might have an option to call after() in a short cicuit
+              if (early instanceof Response) return early;
+            }
+            // 2. Call the handler
+            const response = await route.handler(context);
+
+            // 3. the after loop (reverse)
+            for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
+              await this._middlewareChain[i]?.after(context, response);
+            }
+
+            return response;
+            // return route.handler(context);
           }
-          // 2. Call the handler
-          const response = await route.handler(context);
 
-          // 3. the after loop (reverse)
-          for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
-            await this._middlewareChain[i]?.after(context, response);
-          }
-
-          return response;
-          // return route.handler(context);
+          return new Response("Not Found!", { status: 404 });
+        } catch (e) {
+          console.log('something went wrong!', e);
+          return new Response(
+            JSON.stringify({ error: "Internal Server Error" }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
         }
-
-
-        return new Response('Not Found!', {status: 404});
       },
     });
 
