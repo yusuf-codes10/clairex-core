@@ -58,6 +58,7 @@ export class ClaireX extends ClaireRouter {
           return new ClaireException(404, 'Route Not Found!').toResponse();
         } catch (e) {
           console.log('something went wrong!', e);
+          if (e instanceof ClaireException) return e.toResponse();
           return new ClaireException(500,' Internal Server Error' ).toResponse();
         }
       },

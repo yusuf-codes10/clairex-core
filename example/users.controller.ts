@@ -1,5 +1,6 @@
 import { ClaireController } from "../src/core/controller";
 import { ClaireContext } from "../src/core/context";
+import { ClaireException } from "../src/core/exception";
 
 type User = {
     id: number,
@@ -33,6 +34,7 @@ export class userController extends ClaireController {
         const {id} = c.request.params;
         console.log('id is: ', id);
         const foundUser = users.find(u => u.id === Number(id));
+        if (!foundUser) throw new ClaireException(404, 'User not Found!');
         return c.response.json(foundUser);
     }
 
