@@ -9,15 +9,15 @@ export class ClaireException extends Error {
         this._content = content;
     }
 
-    get statusCode () {
+    get statusCode(): number {
         return this._statusCode;
     }
 
-    get content() {
+    get content(): string {
         return this._content;
     }
 
-    get metadata () {
+    get metadata(): Record<string, string> | undefined {
         return this._metadata;
     }
 }
