@@ -52,8 +52,23 @@ export class ClaireX extends ClaireRouter {
               }
             }
 
+            // route level middleware
+            if (route.routeMiddlewares) {
+              for (const middleware of route.routeMiddlewares) {
+                const early = await middleware.before(context);
+                if (early instanceof Response) return early;
+              }
+            }
+
             // 3. Call the handler
             const response = await route.handler(context);
+
+            // route level before
+            if (route.routeMiddlewares) {
+              for (let i = route.routeMiddlewares.length - 1; i >= 0; i--) {
+                await route.routeMiddlewares[i]?.after(context, response);
+              }
+            }
 
             // 4. the scoped after
             if (route.middlewares) {
