@@ -2,6 +2,8 @@ import { ClaireController } from "../src/core/controller";
 import { ClaireContext } from "../src/core/context";
 import { ClaireException } from "../src/core/exception";
 import { logger } from "./logger";
+import { middle } from "./middlewares/middle";
+import { inner } from "./middlewares/inner";
 
 type User = {
     id: number,
@@ -18,12 +20,12 @@ const users: User[] = [
 export class userController extends ClaireController {
 
     constructor () {
-        super('/users', [new logger()]);
+        super('/users', [new logger(), new middle()]);
     }
 
     register () {
         this.routes('get', '/', this.getUsers);
-        this.routes('post', '/', this.createUser);
+        this.routes('post', '/', this.createUser, [new inner()]);
         this.routes('get', '/:id', this.getUserById);
     }
 
