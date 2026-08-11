@@ -428,8 +428,8 @@ These are known architectural issues that need solving in upcoming tasks.
 ### Problem 2: Params Encapsulation
 `context.request.params = params` is assigned publicly in ClaireX's fetch handler after context creation. Breaks backing field pattern. Needs to be sealed — either via constructor refactor or middleware-level internal access.
 
-### Problem 3: Scoped Middleware
-All middlewares registered via `app.use()` are global — they run on every route. No way to scope middleware per controller or per route. Needs: controller-level `use()`, route-level attachment, or path-based matching.
+### Problem 3: Scoped Middleware ✅ SOLVED
+~~All middlewares registered via `app.use()` are global.~~ ClaireX now supports three levels of middleware: global (`app.use()`), controller-level (passed to constructor), and route-level (4th param in `this.routes()`). Execution follows onion model at all three layers.
 
 ### Problem 4: Global Error Handling ✅ SOLVED
 ~~No try/catch in `fetch` handler.~~ ClaireException + try/catch now handles all thrown errors globally. Intentional throws return their typed response, unknown errors return generic 500.
@@ -495,7 +495,84 @@ private getUserById(c: ClaireContext) {
 
 ---
 
-### Task 22: ClaireValidator — Built-in Validation
+### Task 22: Scoped Middleware — Three-Level Middleware Architecture ✅
+**Commits:** `9c8a9ec`, `8a1220d`, `154b063`, `d380034`, `538e749`, `74f6e46`, `68f31e1`, `e74884d`, `428108b`, `7cecddb`, `60b19b9`, `edc2e97`, `2949091`, `02def40`
+
+**What was done:**
+- ClaireController now owns its own middleware chain: `private _middlewareChain?: ClaireMiddleware[]`
+- Controller-level middlewares passed via constructor: `super('/users', [new AuthGuard()])`
+- Route-level middlewares as 4th param: `this.routes('get', '/:id', this.getUserById, [new Auth()])`
+- `mount()` updated: maps routes with controller's middlewares via spread + tag (`route.middlewares`)
+- `routes()` method pushes directly to `_router.routes` including `routeMiddlewares` field
+- `RouterEntry` extended with two optional fields: `middlewares?` (controller) and `routeMiddlewares?` (route)
+- ClaireX `fetch` handler executes all three layers in onion model order
+- Tested all three levels simultaneously — verified execution order and short-circuit at each level
+
+**ClaireX Middleware Philosophy — The Three-Level Onion Model:**
+
+```
+┌─────────────────────────────────────────────────────┐
+│  GLOBAL (app.use)                                    │
+│  ┌─────────────────────────────────────────────┐    │
+│  │  CONTROLLER (super('/prefix', [middlewares])) │    │
+│  │  ┌─────────────────────────────────────┐    │    │
+│  │  │  ROUTE (this.routes(..., [mw]))      │    │    │
+│  │  │  ┌─────────────────────────────┐    │    │    │
+│  │  │  │        HANDLER              │    │    │    │
+│  │  │  └─────────────────────────────┘    │    │    │
+│  │  └─────────────────────────────────────┘    │    │
+│  └─────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────┘
+```
+
+**Execution order:**
+1. Global before (in order)
+2. Controller before (in order)
+3. Route before (in order)
+4. **Handler**
+5. Route after (reverse)
+6. Controller after (reverse)
+7. Global after (reverse)
+
+Short-circuit at any level skips everything below it — handler never runs.
+
+**Performance note:** The nested loops are not O(n²) in any practical sense. Middleware chains are tiny (2–5 items typically). You're never going to have 10,000 middlewares. The clarity of three explicit levels far outweighs any theoretical loop overhead.
+
+**Design decisions:**
+- Controller owns its middlewares (self-contained unit: prefix + routes + middleware)
+- `mount()` tags routes at mount time — preserves controller identity without refactoring the match loop
+- `routes()` pushes route-level middlewares directly onto `RouterEntry` — no intermediary
+- `if` guards skip undefined middleware arrays — most routes won't have all three levels, so the common path is fast
+- No refactor to the flat route array — routes still live in one array, just carry more metadata
+- Three separate fields on `RouterEntry` keeps the layers distinct and execution order explicit
+
+**Usage example:**
+```typescript
+// Global middleware — runs on ALL routes
+app.use(new Logger());
+
+// Controller with scoped middleware — runs on all /users routes
+export class UserController extends ClaireController {
+    constructor() {
+        super('/users', [new AuthGuard()]);  // controller-level
+    }
+
+    register() {
+        this.routes('get', '/', this.getUsers);  // no extra middleware
+        this.routes('get', '/:id', this.getUserById, [new RateLimiter()]);  // route-level
+        this.routes('post', '/', this.createUser);
+    }
+}
+
+// Result:
+// GET /users       → Logger → AuthGuard → handler
+// GET /users/:id   → Logger → AuthGuard → RateLimiter → handler
+// POST /users      → Logger → AuthGuard → handler
+```
+
+---
+
+### Task 23: ClaireValidator — Built-in Validation
 **Relates to:** US-4 (Built-in Validation), Problem 1  
 **Dependencies:** Task 21 (needs `ValidationException` for errors)
 
@@ -510,23 +587,50 @@ private getUserById(c: ClaireContext) {
 
 ---
 
-### Task 23: Scoped Middleware — Per Controller/Route
-**Relates to:** Problem 3  
-**Dependencies:** Task 18 (ClaireMiddleware), Task 15 (ClaireController)
+### Task 23: ClaireValidator — Built-in Validation
+**Relates to:** US-4 (Built-in Validation), Problem 1  
+**Dependencies:** Task 21 (needs `ValidationException` for errors)
 
 **What to do:**
-- Allow controllers to register their own middlewares (scoped to that controller's routes)
-- Possibly: route-level middleware attachment
-- Execution order: global middlewares first, then scoped middlewares
-- ClaireX needs to know which controller a route belongs to (currently lost after `mount()` spreads routes)
+- Define validation rules mechanism (class-based, colocated with types)
+- Implement abstract `ClaireValidator<T>` class with `validate()` and `rules()` methods
+- Validation errors throw `ValidationException` with structured details
+- Integrate with route handlers or middleware (validate body/params/query before handler)
+- After validation, data is typed — no more `unknown`, no more `as` assertions
 
-**Done when:** A middleware registered on a controller only runs for that controller's routes.
+**Done when:** Can define a validator class, validate incoming data, and receive fully typed output. Invalid data is rejected with structured errors.
 
 ---
 
-### Task 24: RouterGroup — Prefix + Scoped Middleware
+### Task 24: Pre-built Exceptions — Subclasses
+**Relates to:** Task 21  
+**Dependencies:** Task 21 (base ClaireException)
+
+**What to do:**
+- Create `/src/exceptions/` folder
+- Implement convenience subclasses: `NotFoundException` (404), `ValidationException` (400), `UnauthorizedException` (401), `InternalException` (500)
+- Each subclass sets its status code in the constructor — user only provides message
+
+**Done when:** Users can `throw new NotFoundException('User not found')` without remembering status codes.
+
+---
+
+### Task 25: Pre-built Middlewares — Logger & Others
+**Relates to:** Task 18  
+**Dependencies:** Task 18 (ClaireMiddleware base)
+
+**What to do:**
+- Create `/src/middleware/` folder
+- Implement `Logger` middleware (logs method, pathname, timestamp)
+- Possibly: `Cors`, `RateLimiter`, or other common middlewares
+
+**Done when:** Framework ships with useful default middlewares out of the box.
+
+---
+
+### Task 26: RouterGroup — Prefix + Scoped Middleware
 **Relates to:** US-9 (Route Groups)  
-**Dependencies:** Task 23, Task 13
+**Dependencies:** Task 22, Task 13
 
 **What to do:**
 - Implement `RouterGroup` class with prefix and scoped middleware
@@ -538,7 +642,7 @@ private getUserById(c: ClaireContext) {
 
 ---
 
-### Task 25: Plugin System — IPlugin Interface
+### Task 27: Plugin System — IPlugin Interface
 **Relates to:** US-10 (Plugin System)  
 **Dependencies:** Task 3
 
@@ -551,9 +655,9 @@ private getUserById(c: ClaireContext) {
 
 ---
 
-### Task 26: Typed Handler Enforcement
+### Task 28: Typed Handler Enforcement
 **Relates to:** US-6 (Typed Handler Signatures)  
-**Dependencies:** Task 22 (needs validator for type connection)
+**Dependencies:** Task 23 (needs validator for type connection)
 
 **What to do:**
 - Evolve `ClaireHandler` to generic: `ClaireHandler<TParams, TQuery, TBody>`
@@ -564,9 +668,9 @@ private getUserById(c: ClaireContext) {
 
 ---
 
-### Task 27: Bun.plugin — .claire File Extension (Experimental)
+### Task 29: Bun.plugin — .claire File Extension (Experimental)
 **Relates to:** ClaireX differentiator  
-**Dependencies:** Task 22, Task 26
+**Dependencies:** Task 23, Task 28
 
 **What to do:**
 - Implement custom Bun.plugin that registers `.claire` file loader
@@ -578,7 +682,7 @@ private getUserById(c: ClaireContext) {
 
 ---
 
-### Task 28: Documentation & Hackathon Submission
+### Task 30: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -617,10 +721,12 @@ private getUserById(c: ClaireContext) {
 | 19 | ClaireX — Basic 404 Fallback | ✅ Done |
 | 20 | Integration Test — Middleware | ✅ Done |
 | 21 | ClaireException — Error Classes | ✅ Done |
-| 22 | ClaireValidator — Validation | ⬜ Pending |
-| 23 | Scoped Middleware | ⬜ Next |
-| 24 | RouterGroup — Prefixes | ⬜ Pending |
-| 25 | Plugin System | ⬜ Pending |
-| 26 | Typed Handler Enforcement | ⬜ Pending |
-| 27 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 28 | Documentation & Submission | ⬜ Final |
+| 22 | Scoped Middleware — Three Levels | ✅ Done |
+| 23 | ClaireValidator — Validation | ⬜ Next |
+| 24 | Pre-built Exceptions | ⬜ Pending |
+| 25 | Pre-built Middlewares | ⬜ Pending |
+| 26 | RouterGroup — Prefixes | ⬜ Pending |
+| 27 | Plugin System | ⬜ Pending |
+| 28 | Typed Handler Enforcement | ⬜ Pending |
+| 29 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 30 | Documentation & Submission | ⬜ Final |
