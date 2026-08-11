@@ -28,4 +28,8 @@ export abstract class ClaireController {
     get router(): RouterEntry[] {
         return this._router.routes;
     }
+
+    get middlewares(): ClaireMiddleware[] | undefined {
+        return this._middlewareChain;
+    }
 }
