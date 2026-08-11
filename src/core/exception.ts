@@ -20,4 +20,11 @@ export class ClaireException extends Error {
     get metadata(): Record<string, string> | undefined {
         return this._metadata;
     }
+
+    toResponse(): Response {
+        return new Response(JSON.stringify(this._content), {
+            status: this._statusCode,
+            headers: { "Content-Type": "application/json" },
+        });
+    }
 }
