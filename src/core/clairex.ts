@@ -43,6 +43,15 @@ export class ClaireX extends ClaireRouter {
               // TODO: might have an option to call after() in a short cicuit
               if (early instanceof Response) return early;
             }
+
+            // 1.2 the scoped before
+            if (route.middlewares) {
+              for (const middleware of route.middlewares) {
+                const early = await middleware.before(context);
+                if (early instanceof Response) return early;
+              }
+            }
+
             // 2. Call the handler
             const response = await route.handler(context);
 
