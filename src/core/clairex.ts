@@ -44,7 +44,7 @@ export class ClaireX extends ClaireRouter {
               if (early instanceof Response) return early;
             }
 
-            // 1.2 the scoped before
+            // 2. the scoped before
             if (route.middlewares) {
               for (const middleware of route.middlewares) {
                 const early = await middleware.before(context);
@@ -52,10 +52,17 @@ export class ClaireX extends ClaireRouter {
               }
             }
 
-            // 2. Call the handler
+            // 3. Call the handler
             const response = await route.handler(context);
 
-            // 3. the after loop (reverse)
+            // 4. the scoped after
+            if (route.middlewares) {
+              for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
+                await route.middlewares[i]?.after(context, response);
+              }
+            }
+
+            // 5. the after loop (reverse)
             for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
               await this._middlewareChain[i]?.after(context, response);
             }
@@ -64,11 +71,14 @@ export class ClaireX extends ClaireRouter {
             // return route.handler(context);
           }
 
-          return new ClaireException(404, 'Route Not Found!').toResponse();
+          return new ClaireException(404, "Route Not Found!").toResponse();
         } catch (e) {
-          console.log('something went wrong!', e);
+          console.log("something went wrong!", e);
           if (e instanceof ClaireException) return e.toResponse();
-          return new ClaireException(500,' Internal Server Error' ).toResponse();
+          return new ClaireException(
+            500,
+            " Internal Server Error",
+          ).toResponse();
         }
       },
     });
