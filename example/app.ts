@@ -10,6 +10,6 @@ app.mount(new userController());
 
 // middlwares
 app.use(new logger());
-app.use(new tester());
+// app.use(new tester());
 
 app.listen();

@@ -2,14 +2,15 @@ import { ClaireController } from "../src/core/controller";
 import { ClaireContext } from "../src/core/context";
 
 type User = {
+    id: number,
     name: string,
     age: number
 }
 
 const users: User[] = [
-  { name: "Claire", age: 23 },
-  { name: "John", age: 33 },
-  { name: "Veronica", age: 28 },
+  { id: 1, name: "Claire", age: 23 },
+  { id: 2, name: "John", age: 33 },
+  { id: 3, name: "Veronica", age: 28 },
 ];
 
 export class userController extends ClaireController {
@@ -21,14 +22,22 @@ export class userController extends ClaireController {
     register () {
         this.routes('get', '/', this.getUsers);
         this.routes('post', '/', this.createUser);
+        this.routes('get', '/:id', this.getUserById);
     }
 
     private getUsers (c: ClaireContext) {
         return c.response.json(users);
     }
 
+    private getUserById (c: ClaireContext) {
+        const {id} = c.request.params;
+        console.log('id is: ', id);
+        const foundUser = users.find(u => u.id === Number(id));
+        return c.response.json(foundUser);
+    }
+
     private async createUser  (c: ClaireContext) {
-        const body = (await c.request.json()) as {name: string, age: number};
+        const body = (await c.request.json()) as {id: number, name: string, age: number};
         users.push(body);
         return c.response.json(users);
     }
