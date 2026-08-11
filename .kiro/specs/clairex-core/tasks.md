@@ -431,8 +431,8 @@ These are known architectural issues that need solving in upcoming tasks.
 ### Problem 3: Scoped Middleware
 All middlewares registered via `app.use()` are global — they run on every route. No way to scope middleware per controller or per route. Needs: controller-level `use()`, route-level attachment, or path-based matching.
 
-### Problem 4: Global Error Handling
-No try/catch in `fetch` handler. If a handler or middleware throws, Bun gets an unhandled error. Needs: wrap execution in try/catch, return structured error JSON. Depends on ClaireException for typed error responses.
+### Problem 4: Global Error Handling ✅ SOLVED
+~~No try/catch in `fetch` handler.~~ ClaireException + try/catch now handles all thrown errors globally. Intentional throws return their typed response, unknown errors return generic 500.
 
 ---
 
@@ -442,17 +442,56 @@ These tasks represent the next features to implement.
 
 ---
 
-### Task 21: ClaireException — Typed Error Classes
-**Relates to:** US-8 (Typed Error Handling), Problem 4  
-**Dependencies:** Task 1
+### Task 21: ClaireException — Typed Error Classes ✅
+**Commits:** `c4f6143`, `3e946e9`, `1ef406d`, `d109424`, `8a72bdb`, `bce9dad`, `48dd9c0`, `76a5db9`, `097cd0f`, `373db26`, `3fb929d`, `61debe9`, `7f8b8a2`, `3d25214`
 
-**What to do:**
-- Implement base `ClaireException` class extending `Error`
-- Add `statusCode`, `message`, and optional `metadata`
-- Create pre-built exceptions: `NotFoundException`, `ValidationException`, `UnauthorizedException`, `InternalException`
-- Add global try/catch in ClaireX's `fetch` handler — catch unhandled errors, return structured JSON
+**What was done:**
+- Implemented `ClaireException` class extending `Error` in `src/core/exception.ts`
+- Fields: `_statusCode: number`, `_content: string`, `_metadata?: Record<string, string>`
+- Backing field pattern with getters for all fields
+- `this.name = 'ClaireException'` overrides default Error name
+- `super(content)` passes message to Error for stack trace
+- `toResponse(): Response` — serializes to JSON `{ exception: content }` with correct status code and `Content-Type: application/json`
+- Global try/catch in ClaireX's `fetch` handler:
+  - `if (e instanceof ClaireException) return e.toResponse()` — handles intentional throws
+  - Falls back to `new ClaireException(500, 'Internal Server Error').toResponse()` for unknown errors
+- Replaced basic 404 fallback with `new ClaireException(404, 'Route Not Found!').toResponse()`
 
-**Done when:** Throwing a `ClaireException` in a handler or middleware results in a structured JSON error response. Unknown errors return generic 500.
+**Design decisions:**
+- `toResponse()` as a method — the exception knows how to serialize itself (OOP: object owns its behavior)
+- Two usage patterns available to the user:
+  - **`throw new ClaireException(404, 'Not found')`** — bubbles to catch block, framework handles it. Cleaner for bail-out scenarios.
+  - **`return new ClaireException(404, 'Not found').toResponse()`** — explicit inline return, never hits catch. Handler stays in control.
+- `ClaireHandler` type enforces `Response` return — if you forget `.toResponse()`, TypeScript flags it immediately
+- Metadata is optional — available for future use (validation error details, debug info)
+- Base class only for now — pre-built subclasses (`NotFoundException`, `ValidationException`, `UnauthorizedException`, `InternalException`) will live in `/src/exceptions/` later
+
+**Usage example:**
+```typescript
+// Option 1: throw (bubbles to ClaireX catch block)
+private getUserById(c: ClaireContext) {
+    const { id } = c.request.params;
+    const foundUser = users.find(u => u.id === Number(id));
+    if (!foundUser) throw new ClaireException(404, 'User not Found!');
+    return c.response.json(foundUser);
+}
+
+// Option 2: return + toResponse (inline, explicit)
+private getUserById(c: ClaireContext) {
+    const { id } = c.request.params;
+    const foundUser = users.find(u => u.id === Number(id));
+    if (!foundUser) return new ClaireException(404, 'User not Found!').toResponse();
+    return c.response.json(foundUser);
+}
+```
+
+**Planned (future):**
+- Pre-built exception subclasses in `/src/exceptions/`:
+  - `NotFoundException` (404)
+  - `ValidationException` (400)
+  - `UnauthorizedException` (401)
+  - `InternalException` (500)
+- Pre-built middlewares in `/src/middleware/` (Logger, etc.)
 
 ---
 
@@ -577,9 +616,9 @@ These tasks represent the next features to implement.
 | 18 | ClaireMiddleware — Before/After Model | ✅ Done |
 | 19 | ClaireX — Basic 404 Fallback | ✅ Done |
 | 20 | Integration Test — Middleware | ✅ Done |
-| 21 | ClaireException — Error Classes | ⬜ Next |
+| 21 | ClaireException — Error Classes | ✅ Done |
 | 22 | ClaireValidator — Validation | ⬜ Pending |
-| 23 | Scoped Middleware | ⬜ Pending |
+| 23 | Scoped Middleware | ⬜ Next |
 | 24 | RouterGroup — Prefixes | ⬜ Pending |
 | 25 | Plugin System | ⬜ Pending |
 | 26 | Typed Handler Enforcement | ⬜ Pending |
