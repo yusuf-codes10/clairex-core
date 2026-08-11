@@ -22,7 +22,7 @@ export class ClaireException extends Error {
     }
 
     toResponse(): Response {
-        return new Response(JSON.stringify(this._content), {
+        return new Response(JSON.stringify({ exception: this._content }), {
             status: this._statusCode,
             headers: { "Content-Type": "application/json" },
         });
