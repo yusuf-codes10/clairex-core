@@ -9,7 +9,7 @@ const app = new ClaireX(2300);
 app.mount(new userController());
 
 // middlwares
-app.use(new logger());
+// app.use(new logger());
 // app.use(new tester());
 
 app.listen();

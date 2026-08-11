@@ -1,6 +1,7 @@
 import { ClaireController } from "../src/core/controller";
 import { ClaireContext } from "../src/core/context";
 import { ClaireException } from "../src/core/exception";
+import { logger } from "./logger";
 
 type User = {
     id: number,
@@ -17,7 +18,7 @@ const users: User[] = [
 export class userController extends ClaireController {
 
     constructor () {
-        super('/users');
+        super('/users', [new logger()]);
     }
 
     register () {
