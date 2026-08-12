@@ -85,3 +85,20 @@ ${yellow}   ║  ${hintPad}${red}║`;
 
   console.log(output);
 };
+
+
+export const colorMethod = (method: string): string => {
+  const reset: string = "\x1b[0m";
+  const bold: string = "\x1b[1m";
+
+  const colors: Record<string, string> = {
+    GET: "\x1b[38;2;80;200;120m",     // green
+    POST: "\x1b[38;2;60;140;230m",    // blue
+    PUT: "\x1b[38;2;220;180;50m",     // yellow
+    PATCH: "\x1b[38;2;180;130;220m",  // purple
+    DELETE: "\x1b[38;2;220;70;70m",   // red
+  };
+
+  const color: string = colors[method] ?? "\x1b[37m";
+  return `${bold}${color}${method}${reset}`;
+};
