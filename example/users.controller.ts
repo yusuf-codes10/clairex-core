@@ -43,6 +43,9 @@ export class userController extends ClaireController {
 
     private async createUser  (c: ClaireContext) {
         const body = (await c.request.json()) as {id: number, name: string, age: number};
+        if (users.find(u => u.id === body.id)) {
+            return new ClaireException(400, 'User id already exists!').toResponse();
+        }
         users.push(body);
         return c.response.json(users);
     }
