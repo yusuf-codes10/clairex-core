@@ -572,7 +572,44 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 23: ClaireValidator — Built-in Validation
+### Task 23: Developer Experience — Terminal Polish ✅
+**Commits:** `2430150`, `7d4a84f`, `0c41d27`, `d3ed0ac`, `e390ca7`, `c4e68fa`, `c4e354b`, `98146f8`, `e5c1f99`, `337062c`
+
+**What was done:**
+- Created `/src/middleware/ClaireLogger.ts` — first pre-built middleware, ships with the framework
+- ClaireLogger uses `before()` + `after()` to measure request duration (`performance.now()`)
+- Implemented `clairexBanner(port)` utility — retro ASCII art startup banner in purple with framework info
+- Implemented `logClaireException(name, statusCode, content, hint?)` — styled red error box in terminal with optional yellow hint line (room for subclass-specific hints later)
+- Implemented `colorMethod(method)` — colors HTTP methods (GET=green, POST=blue, PUT=yellow, PATCH=purple, DELETE=red)
+- ClaireX constructor auto-registers `ClaireLogger` as the first global middleware — every app gets logging by default
+- `listen()` now calls `clairexBanner(this.port)` instead of plain `console.log`
+- ClaireException `toResponse()` calls `logClaireException()` to log errors in styled format
+
+**Design decisions:**
+- Terminal is part of the DX — not an afterthought. ClaireX has a visual identity in the console
+- `ClaireLogger` lives in `/src/middleware/` (outside core) — framework ships it, but it's not core infrastructure
+- Auto-registered in constructor — zero config, every ClaireX app logs by default
+- `colorMethod` is a util (pure function) — ClaireLogger imports it, but any middleware can reuse it
+- `logClaireException` accepts `name` param — ready for subclasses (`NotFoundException [404]`, etc.)
+- Hint is optional — subclasses will provide their own default hints in the future
+- Duration measured via `performance.now()` in before/after — safe for single-threaded JS
+
+**ClaireLogger usage (auto-included, no setup needed):**
+```typescript
+// Output on every request:
+// → GET http://localhost:2300/users
+// ← GET http://localhost:2300/users 2.34ms
+```
+
+**Utilities in `src/core/utils.ts`:**
+- `clairexBanner(port)` — startup ASCII art
+- `logClaireException(name, statusCode, content, hint?)` — styled error box
+- `colorMethod(method)` — colored HTTP method string
+- `matchRoute(route, path)` — route matching (existing)
+
+---
+
+### Task 24: ClaireValidator — Built-in Validation
 **Relates to:** US-4 (Built-in Validation), Problem 1  
 **Dependencies:** Task 21 (needs `ValidationException` for errors)
 
@@ -587,7 +624,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 23: ClaireValidator — Built-in Validation
+### Task 24: ClaireValidator — Built-in Validation
 **Relates to:** US-4 (Built-in Validation), Problem 1  
 **Dependencies:** Task 21 (needs `ValidationException` for errors)
 
@@ -602,7 +639,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 24: Pre-built Exceptions — Subclasses
+### Task 25: Pre-built Exceptions — Subclasses
 **Relates to:** Task 21  
 **Dependencies:** Task 21 (base ClaireException)
 
@@ -610,25 +647,26 @@ export class UserController extends ClaireController {
 - Create `/src/exceptions/` folder
 - Implement convenience subclasses: `NotFoundException` (404), `ValidationException` (400), `UnauthorizedException` (401), `InternalException` (500)
 - Each subclass sets its status code in the constructor — user only provides message
+- Each subclass provides its own default hint for `logClaireException()`
 
-**Done when:** Users can `throw new NotFoundException('User not found')` without remembering status codes.
+**Done when:** Users can `throw new NotFoundException('User not found')` without remembering status codes. Terminal shows subclass name and helpful hint.
 
 ---
 
-### Task 25: Pre-built Middlewares — Logger & Others
+### Task 26: Pre-built Middlewares — Beyond Logger
 **Relates to:** Task 18  
 **Dependencies:** Task 18 (ClaireMiddleware base)
 
 **What to do:**
-- Create `/src/middleware/` folder
-- Implement `Logger` middleware (logs method, pathname, timestamp)
-- Possibly: `Cors`, `RateLimiter`, or other common middlewares
+- Expand `/src/middleware/` folder
+- Possibly: `ClaireCorst`, `ClaireRateLimiter`, or other common middlewares
+- ClaireLogger already done (Task 23)
 
 **Done when:** Framework ships with useful default middlewares out of the box.
 
 ---
 
-### Task 26: RouterGroup — Prefix + Scoped Middleware
+### Task 27: RouterGroup — Prefix + Scoped Middleware
 **Relates to:** US-9 (Route Groups)  
 **Dependencies:** Task 22, Task 13
 
@@ -642,7 +680,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 27: Plugin System — IPlugin Interface
+### Task 28: Plugin System — IPlugin Interface
 **Relates to:** US-10 (Plugin System)  
 **Dependencies:** Task 3
 
@@ -655,9 +693,9 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 28: Typed Handler Enforcement
+### Task 29: Typed Handler Enforcement
 **Relates to:** US-6 (Typed Handler Signatures)  
-**Dependencies:** Task 23 (needs validator for type connection)
+**Dependencies:** Task 24 (needs validator for type connection)
 
 **What to do:**
 - Evolve `ClaireHandler` to generic: `ClaireHandler<TParams, TQuery, TBody>`
@@ -668,9 +706,9 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 29: Bun.plugin — .claire File Extension (Experimental)
+### Task 30: Bun.plugin — .claire File Extension (Experimental)
 **Relates to:** ClaireX differentiator  
-**Dependencies:** Task 23, Task 28
+**Dependencies:** Task 24, Task 29
 
 **What to do:**
 - Implement custom Bun.plugin that registers `.claire` file loader
@@ -682,7 +720,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 30: Documentation & Hackathon Submission
+### Task 31: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -722,11 +760,12 @@ export class UserController extends ClaireController {
 | 20 | Integration Test — Middleware | ✅ Done |
 | 21 | ClaireException — Error Classes | ✅ Done |
 | 22 | Scoped Middleware — Three Levels | ✅ Done |
-| 23 | ClaireValidator — Validation | ⬜ Next |
-| 24 | Pre-built Exceptions | ⬜ Pending |
-| 25 | Pre-built Middlewares | ⬜ Pending |
-| 26 | RouterGroup — Prefixes | ⬜ Pending |
-| 27 | Plugin System | ⬜ Pending |
-| 28 | Typed Handler Enforcement | ⬜ Pending |
-| 29 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 30 | Documentation & Submission | ⬜ Final |
+| 23 | Developer Experience — Terminal Polish | ✅ Done |
+| 24 | ClaireValidator — Validation | ⬜ Next |
+| 25 | Pre-built Exceptions | ⬜ Pending |
+| 26 | Pre-built Middlewares | ⬜ Pending |
+| 27 | RouterGroup — Prefixes | ⬜ Pending |
+| 28 | Plugin System | ⬜ Pending |
+| 29 | Typed Handler Enforcement | ⬜ Pending |
+| 30 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 31 | Documentation & Submission | ⬜ Final |
