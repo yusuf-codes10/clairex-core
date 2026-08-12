@@ -56,7 +56,7 @@ ${dim}   ⚡ Class-based • Bun-native • Explicitly typed${reset}
 };
 
 
-export const clairexError = (name: string, statusCode: number, content: string, hint?: string): void => {
+export const logClaireException = (name: string, statusCode: number, content: string, hint?: string): void => {
   const red: string = "\x1b[38;2;220;50;50m";
   const yellow: string = "\x1b[38;2;220;180;50m";
   const dim: string = "\x1b[2m";

@@ -1,3 +1,5 @@
+import { logClaireException } from '../core/utils';
+
 export class ClaireException extends Error {
     private _statusCode: number;
     private _content: string;
@@ -24,7 +26,7 @@ export class ClaireException extends Error {
     }
 
     toResponse(): Response {
-        console.log(`[ClaireException] ${this._statusCode} — ${this._content}`);
+        logClaireException('ClaireException', this.statusCode, this.content);
         return new Response(JSON.stringify({ exception: this._content }), {
             status: this._statusCode,
             headers: { "Content-Type": "application/json" },
