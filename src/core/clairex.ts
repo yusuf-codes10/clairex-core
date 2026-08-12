@@ -3,6 +3,7 @@ import { ClaireContext } from "./context";
 import { clairexBanner, matchRoute } from "./utils";
 import { ClaireMiddleware } from "./middleware";
 import { ClaireException } from "./exception";
+import { ClaireLogger } from "../middleware/ClaireLogger";
 export class ClaireX extends ClaireRouter {
   private port;
 
@@ -11,6 +12,7 @@ export class ClaireX extends ClaireRouter {
   constructor(port?: number) {
     super();
     this.port = port ?? 3000;
+    this._middlewareChain.push(new ClaireLogger());
   }
 
   use(middleware: ClaireMiddleware): void {

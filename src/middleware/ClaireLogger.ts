@@ -3,6 +3,6 @@ import { ClaireMiddleware } from "../core/middleware";
 
 export class ClaireLogger extends ClaireMiddleware {
     override before(c: ClaireContext) {
-        console.log('Welcome to ClaireX!');
+        console.log(`${c.request.method} ${c.request.url}`);
     }
 }
