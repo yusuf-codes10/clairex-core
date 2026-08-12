@@ -1,6 +1,6 @@
 import { ClaireRouter } from "./router";
 import { ClaireContext } from "./context";
-import { matchRoute } from "./utils";
+import { clairexBanner, matchRoute } from "./utils";
 import { ClaireMiddleware } from "./middleware";
 import { ClaireException } from "./exception";
 export class ClaireX extends ClaireRouter {
@@ -98,6 +98,6 @@ export class ClaireX extends ClaireRouter {
       },
     });
 
-    console.log(`ClaireX running on ${this.port}`);
+    clairexBanner(this.port);
   }
 }

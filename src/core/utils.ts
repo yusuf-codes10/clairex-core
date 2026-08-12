@@ -1,4 +1,7 @@
-export const matchRoute = (route: string, path: string): Record<string, string> | null => {
+export const matchRoute = (
+  route: string,
+  path: string,
+): Record<string, string> | null => {
   const routeParts: string[] = route.split("/").filter(Boolean);
   const pathParts: string[] = path.split("/").filter(Boolean);
 
@@ -27,30 +30,22 @@ export const matchRoute = (route: string, path: string): Record<string, string> 
   return params;
 };
 
-
 export const clairexBanner = (port: number): void => {
   const purple: string = "\x1b[38;2;100;60;220m";
   const dim: string = "\x1b[2m";
   const reset: string = "\x1b[0m";
 
   const banner: string = `
-${purple}   ╔══════════════════════════════════════════════════════╗
-   ║                                                      ║
-   ║    ██████╗ ██╗      █████╗ ██╗██████╗ ███████╗       ║
-   ║   ██╔════╝ ██║     ██╔══██╗██║██╔══██╗██╔════╝       ║
-   ║   ██║      ██║     ███████║██║██████╔╝█████╗         ║
-   ║   ██║      ██║     ██╔══██║██║██╔══██╗██╔══╝         ║
-   ║   ╚██████╗ ███████╗██║  ██║██║██║  ██║███████╗       ║
-   ║    ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝       ║
-   ║                                                      ║
-   ║              ██╗  ██╗                                 ║
-   ║              ╚██╗██╔╝                                 ║
-   ║               ╚███╔╝                                  ║
-   ║               ██╔██╗                                  ║
-   ║              ██╔╝ ██╗                                 ║
-   ║              ╚═╝  ╚═╝                                 ║
-   ║                                                      ║
-   ╚══════════════════════════════════════════════════════╝${reset}
+${purple}   ╔═══════════════════════════════════════════════════════════════════╗
+   ║                                                                   ║
+   ║    ██████╗ ██╗      █████╗ ██╗██████╗ ███████╗██╗  ██╗           ║
+   ║   ██╔════╝ ██║     ██╔══██╗██║██╔══██╗██╔════╝╚██╗██╔╝           ║
+   ║   ██║      ██║     ███████║██║██████╔╝█████╗   ╚███╔╝            ║
+   ║   ██║      ██║     ██╔══██║██║██╔══██╗██╔══╝   ██╔██╗            ║
+   ║   ╚██████╗ ███████╗██║  ██║██║██║  ██║███████╗██╔╝ ██╗           ║
+   ║    ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝           ║
+   ║                                                                   ║
+   ╚═══════════════════════════════════════════════════════════════════╝${reset}
 
 ${dim}   ⚡ ClaireX Framework${reset}
 ${dim}   ⚡ Running on port ${port}${reset}
