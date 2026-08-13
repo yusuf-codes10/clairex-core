@@ -13,7 +13,7 @@ export abstract class ClaireValidator extends ClaireMiddleware {
   abstract rules(): ValidationSchema;
 
   override async before(c: ClaireContext) {
-    const body = await c.request.json();
+    const body = await c.request.json() as Record<string, unknown>;
     const schema = this.rules();
 
     // check body against this.rules()
@@ -55,6 +55,8 @@ export abstract class ClaireValidator extends ClaireMiddleware {
           // throw
         }
       }
+
+      //   store validated body somewhere
     }
   }
 }
