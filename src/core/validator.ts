@@ -25,6 +25,16 @@ export abstract class ClaireValidator extends ClaireMiddleware {
         const rule = schema[key];
         const value = body[key]; // uknown
 
+        // 1. Required Check
+        if (rule?.required && (value === undefined || value === null)) {
+            // throw filed is missing
+        }
+
+        // 2. Type check
+        if (value !== undefined && typeof value !== rule?.type) {
+            // throw wrong type
+        }
+
     }
   }
 }
