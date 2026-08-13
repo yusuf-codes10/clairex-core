@@ -2,7 +2,7 @@ import type { ClaireContext } from "./context";
 import { ClaireMiddleware } from "./middleware";
 
 type ValidationRule = {
-  type: 'number' | 'string' | 'boolean';
+  type: "number" | "string" | "boolean";
   required?: boolean;
   min?: number;
   max?: number;
@@ -13,7 +13,6 @@ export abstract class ClaireValidator extends ClaireMiddleware {
   abstract rules(): ValidationSchema;
 
   override async before(c: ClaireContext) {
-
     const body = await c.request.json();
     const schema = this.rules();
 
@@ -22,19 +21,40 @@ export abstract class ClaireValidator extends ClaireMiddleware {
     // if valid → store typed data somewhere
 
     for (const key in schema) {
-        const rule = schema[key];
-        const value = body[key]; // uknown
+      const rule = schema[key];
+      const value = body[key]; // uknown
 
-        // 1. Required Check
-        if (rule?.required && (value === undefined || value === null)) {
-            // throw filed is missing
+      // 1. Required Check
+      if (rule?.required && (value === undefined || value === null)) {
+        // throw filed is missing
+      }
+
+      // 2. Type check
+      if (value !== undefined && typeof value !== rule?.type) {
+        // throw wrong type
+      }
+
+      // 3. min check
+      if (rule && rule.min !== undefined && value !== undefined) {
+        if (typeof value === "string" && value.length < rule.min) {
+          // throw
         }
 
-        // 2. Type check
-        if (value !== undefined && typeof value !== rule?.type) {
-            // throw wrong type
+        if (typeof value === "number" && value < rule.min) {
+          // throw
+        }
+      }
+
+      // 4. max check
+      if (rule && rule.max !== undefined && value !== undefined) {
+        if (typeof value === "string" && value.length < rule.max) {
+          // throw
         }
 
+        if (typeof value === "number" && value < rule.max) {
+          // throw
+        }
+      }
     }
   }
 }
