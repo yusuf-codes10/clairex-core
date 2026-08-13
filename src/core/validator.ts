@@ -5,6 +5,8 @@ type ValidationRule = {
     max?: number
 }
 
+type ValidationSchema = Record<string, ValidationRule>;
+
 export abstract class ClaireValidator {
     abstract rules (): any
 }
