@@ -2,7 +2,7 @@ import type { ClaireContext } from "./context";
 import { ClaireMiddleware } from "./middleware";
 
 type ValidationRule = {
-  type: number | string | boolean;
+  type: 'number' | 'string' | 'boolean';
   required?: boolean;
   min?: number;
   max?: number;
