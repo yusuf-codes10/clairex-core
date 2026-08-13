@@ -6,7 +6,6 @@ type ValidationRule = {
 }
 
 type ValidationSchema = Record<string, ValidationRule>;
-
 export abstract class ClaireValidator {
-    abstract rules (): any
+    abstract rules (): ValidationSchema
 }
