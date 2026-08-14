@@ -7,7 +7,7 @@ import { ClaireMiddleware } from "./middleware";
  * Extend this class to create a cell for each resource in your API.
  *
  * @example
- * export class UserCell extends ClaireCell {
+ * export class UserKey extends ClaireKey {
  *     constructor() {
  *         super('/users', [new AuthGuard()]);
  *     }
@@ -18,7 +18,7 @@ import { ClaireMiddleware } from "./middleware";
  *     }
  * }
  */
-export abstract class ClaireCell {
+export abstract class ClaireKey {
   protected _router = new ClaireRouter();
   protected prefix: string;
 

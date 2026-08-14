@@ -1,4 +1,4 @@
-import { ClaireController } from "./cell";
+import { ClaireController } from "./key";
 import type { RouterEntry, ClaireHandler } from "./types";
 
 export class ClaireRouter {

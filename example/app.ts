@@ -1,8 +1,8 @@
 import { ClaireX } from "../src";
-import { userCell } from '../example/cells/users.cell';
+import { userKey } from './cells/users.key';
 
 const app = new ClaireX(2300);
 
-app.mount(new userCell());
+app.mount(new userKey());
 
 app.listen();
