@@ -22,7 +22,7 @@ export abstract class ClaireValidator extends ClaireMiddleware {
         // throw filed is missing
         return new ClaireException(
           400,
-          `Validation field: ${key} is required!`,
+          `Validation failed!: ${key} is required!`,
         ).toResponse();
       }
 
@@ -40,14 +40,14 @@ export abstract class ClaireValidator extends ClaireMiddleware {
         if (typeof value === "string" && value.length < rule.min) {
           return new ClaireException(
             400,
-            `Validation failed: "${key}" must be at least ${rule.min} characters`,
+            `Validation failed!: "${key}" must be at least ${rule.min} characters`,
           ).toResponse();
         }
 
         if (typeof value === "number" && value < rule.min) {
           return new ClaireException(
             400,
-            `Validation failed: "${key}" must be at least ${rule.min}`,
+            `Validation failed!: "${key}" must be at least ${rule.min}`,
           ).toResponse();
         }
       }
@@ -57,14 +57,14 @@ export abstract class ClaireValidator extends ClaireMiddleware {
         if (typeof value === "string" && value.length > rule.max) {
           return new ClaireException(
             400,
-            `Validation failed: "${key}" must be at most ${rule.max} characters`,
+            `Validation failed!: "${key}" must be at most ${rule.max} characters`,
           ).toResponse();
         }
 
         if (typeof value === "number" && value > rule.max) {
           return new ClaireException(
             400,
-            `Validation failed: "${key}" must be at most ${rule.max}`,
+            `Validation failed!: "${key}" must be at most ${rule.max}`,
           ).toResponse();
         }
       }
