@@ -1,10 +1,10 @@
-import { ClaireCell } from "../src/core/cell";
-import { ClaireContext } from "../src/core/context";
-import { ClaireException } from "../src/core/exception";
-import { logger } from "./logger";
-import { middle } from "./middlewares/middle";
-import { inner } from "./middlewares/inner";
-import { userValidator } from "./validators/userValidator";
+import { ClaireCell } from "../../src/core/cell";
+import { ClaireContext } from "../../src/core/context";
+import { ClaireException } from "../../src/core/exception";
+import { logger } from "../logger";
+import { middle } from "../middlewares/middle";
+import { inner } from "../middlewares/inner";
+import { userValidator } from "../validators/userValidator";
 
 type User = {
     id: number,
@@ -18,7 +18,7 @@ const users: User[] = [
   { id: 3, name: "Veronica", age: 28 },
 ];
 
-export class userController extends ClaireCell {
+export class userCell extends ClaireCell {
 
     constructor () {
         super('/users', [new logger(), new middle()]);
