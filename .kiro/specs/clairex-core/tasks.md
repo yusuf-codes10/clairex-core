@@ -422,8 +422,8 @@ These are known architectural issues that need solving in upcoming tasks.
 
 ---
 
-### Problem 1: ClaireValidator — Body Typing (`unknown`)
-`c.request.json()` returns `Promise<unknown>`. Users must use `as` type assertions with zero runtime safety. ClaireValidator will bridge runtime validation with compile-time types — the framework's core differentiator.
+### Problem 1: ClaireValidator — Body Typing (`unknown`) ✅ SOLVED
+~~`c.request.json()` returns `Promise<unknown>`.~~ ClaireValidator validates at runtime, stores proven data on context. `c.body<T>()` delivers typed data backed by runtime validation. No external deps — ClaireX IS the validation layer.
 
 ### Problem 2: Params Encapsulation
 `context.request.params = params` is assigned publicly in ClaireX's fetch handler after context creation. Breaks backing field pattern. Needs to be sealed — either via constructor refactor or middleware-level internal access.
@@ -609,37 +609,124 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 24: ClaireValidator — Built-in Validation
-**Relates to:** US-4 (Built-in Validation), Problem 1  
-**Dependencies:** Task 21 (needs `ValidationException` for errors)
+### Task 24: ClaireValidator — Abstract Class & Rules Engine ✅
+**Commits:** `de0c141`, `1efa66b`, `21d0bda`, `1424bf1`, `6414e4d`, `ba2bba9`, `2c4b664`, `97b6b1b`, `24221a9`, `30abc4b`
 
-**What to do:**
-- Define validation rules mechanism (class-based, colocated with types)
-- Implement abstract `ClaireValidator<T>` class with `validate()` and `rules()` methods
-- Validation errors throw `ValidationException` with structured details
-- Integrate with route handlers or middleware (validate body/params/query before handler)
-- After validation, data is typed — no more `unknown`, no more `as` assertions
+**What was done:**
+- Created `ClaireValidator` abstract class in `src/core/validator.ts`
+- **Extends ClaireMiddleware** — validation IS a middleware, runs in `before()`
+- Defined `ValidationRule` type: `{ type: 'string' | 'number' | 'boolean', required?, min?, max? }`
+- Defined `ValidationSchema` type: `Record<string, ValidationRule>`
+- Abstract `rules(): ValidationSchema` — contract: subclasses define their validation shape
+- Extracted types into `src/core/types.ts` for reusability
 
-**Done when:** Can define a validator class, validate incoming data, and receive fully typed output. Invalid data is rejected with structured errors.
+**Why ClaireValidator extends ClaireMiddleware:**
+- The checking mechanism IS the middleware — no separate validation step
+- Runs automatically via the three-level onion model (route-level middleware)
+- Short-circuits on failure — handler never runs if validation fails
+- OOP inheritance: validator inherits the entire before/after lifecycle
+- No new concept to learn — if you know middleware, you know validation
+
+**Validation engine (in `before()`):**
+1. Reads body: `(await c.request.json()) as Record<string, unknown>` — the ONE place `as` is acceptable (we're about to prove the shape)
+2. Loops through `this.rules()` schema
+3. For each field, checks: required → type → min → max
+4. On failure: returns `ClaireException(400, ...)` response (short-circuit)
+5. On success: stores validated body on ClaireContext
+
+**Checks implemented:**
+- **Required** — `value === undefined || value === null`
+- **Type** — `typeof value !== rule.type`
+- **Min** — string: `value.length < min`, number: `value < min`
+- **Max** — string: `value.length > max`, number: `value > max`
 
 ---
 
-### Task 24: ClaireValidator — Built-in Validation
-**Relates to:** US-4 (Built-in Validation), Problem 1  
-**Dependencies:** Task 21 (needs `ValidationException` for errors)
+### Task 25: ClaireContext — Validated Body Storage ✅
+**Commits:** `067c042`, `388dd5c`, `ff95a11`
 
-**What to do:**
-- Define validation rules mechanism (class-based, colocated with types)
-- Implement abstract `ClaireValidator<T>` class with `validate()` and `rules()` methods
-- Validation errors throw `ValidationException` with structured details
-- Integrate with route handlers or middleware (validate body/params/query before handler)
-- After validation, data is typed — no more `unknown`, no more `as` assertions
+**What was done:**
+- Added `private _valid: unknown = {}` field on ClaireContext
+- Added setter: `set setBody(data: unknown)` — validator stores validated body
+- Added generic method: `body<T>(): T` — handler reads typed data
+- Cannot use `get` keyword with generics (TypeScript limitation) — hence `body<T>()` is a method
+- Setter and getter have different names (`setBody` vs `body`) — avoids name collision
 
-**Done when:** Can define a validator class, validate incoming data, and receive fully typed output. Invalid data is rejected with structured errors.
+**Design decisions:**
+- Validator writes, handler reads — clear separation
+- `body<T>()` uses `as T` internally — but this is NOT "trust me bro" because the validator already ran and proved the shape at runtime
+- The generic `<T>` is the developer's declaration of what was validated — backed by runtime proof
+- `_valid` is `unknown` internally — only typed when accessed via `body<T>()`
 
 ---
 
-### Task 25: Pre-built Exceptions — Subclasses
+### Task 26: ClaireValidator — Integration & Testing ✅
+**Commits:** `1c9dd7d`, `1bc4d95`, `f5e7a7f`, `dcbf37a`, `2e312e7`, `96c76af`, `538c3b9`
+
+**What was done:**
+- Created example `userValidator` class extending ClaireValidator
+- Attached as route-level middleware: `this.routes('post', '/', this.createUser, [new inner(), new userValidator()])`
+- Handler uses `c.body<User>()` instead of `await c.request.json()`
+- Tested all validation checks: required (missing fields), type (wrong types), min/max (bounds)
+- Tested JSON parse error — caught by global try/catch → 500
+- Tested valid data — passes through, handler receives typed body
+- Users must annotate `rules()` return type with `ValidationSchema` (TypeScript widens string literals otherwise)
+
+**User workflow (3 steps):**
+1. Define your type: `type User = { id: number, name: string, age: number }`
+2. Extend ClaireValidator with rules:
+```typescript
+// Recommended: create a validators/ folder
+import { ClaireValidator } from "../../src/core/validator";
+import type { ValidationSchema } from '../../src/core/types';
+
+export class userValidator extends ClaireValidator {
+    override rules(): ValidationSchema {
+        return {
+            id: { type: 'number', required: true, max: 200 },
+            name: { type: 'string', required: true, min: 3 },
+            age: { type: 'number', required: true }
+        }
+    }
+}
+```
+3. Use in controller + read typed body:
+```typescript
+export class userController extends ClaireController {
+    constructor() {
+        super('/users', [new logger(), new middle()]);
+    }
+
+    register() {
+        this.routes('get', '/', this.getUsers);
+        this.routes('post', '/', this.createUser, [new inner(), new userValidator()]);
+        this.routes('get', '/:id', this.getUserById);
+    }
+
+    private createUser(c: ClaireContext) {
+        const body = c.body<User>();  // ← typed! no `as`, no `unknown`
+        users.push(body);
+        return c.response.json(users);
+    }
+}
+```
+
+**Problem 1: SOLVED ✅**
+- `c.request.json()` returns `unknown` — that's intentional, runtime data has no compile-time type
+- ClaireValidator validates at runtime, stores proven data on context
+- `c.body<T>()` delivers typed data — backed by runtime validation, not blind assertion
+- No Zod, no Yup, no external deps — ClaireX IS the validation layer
+
+**What ClaireValidator doesn't handle yet (future expansion):**
+- Nested objects (`{ address: { street: string } }`)
+- Arrays (`{ tags: string[] }`)
+- Enums (`{ role: 'admin' | 'user' }`)
+- Custom refinements (regex, custom functions)
+- Error accumulation (currently fails on first error)
+
+---
+
+### Task 27: Pre-built Exceptions — Subclasses
 **Relates to:** Task 21  
 **Dependencies:** Task 21 (base ClaireException)
 
@@ -653,7 +740,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 26: Pre-built Middlewares — Beyond Logger
+### Task 28: Pre-built Middlewares — Beyond Logger
 **Relates to:** Task 18  
 **Dependencies:** Task 18 (ClaireMiddleware base)
 
@@ -666,7 +753,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 27: RouterGroup — Prefix + Scoped Middleware
+### Task 29: RouterGroup — Prefix + Scoped Middleware
 **Relates to:** US-9 (Route Groups)  
 **Dependencies:** Task 22, Task 13
 
@@ -680,7 +767,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 28: Plugin System — IPlugin Interface
+### Task 30: Plugin System — IPlugin Interface
 **Relates to:** US-10 (Plugin System)  
 **Dependencies:** Task 3
 
@@ -693,7 +780,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 29: Typed Handler Enforcement
+### Task 31: Typed Handler Enforcement
 **Relates to:** US-6 (Typed Handler Signatures)  
 **Dependencies:** Task 24 (needs validator for type connection)
 
@@ -706,9 +793,9 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 30: Bun.plugin — .claire File Extension (Experimental)
+### Task 32: Bun.plugin — .claire File Extension (Experimental)
 **Relates to:** ClaireX differentiator  
-**Dependencies:** Task 24, Task 29
+**Dependencies:** Task 24, Task 31
 
 **What to do:**
 - Implement custom Bun.plugin that registers `.claire` file loader
@@ -720,7 +807,7 @@ export class UserController extends ClaireController {
 
 ---
 
-### Task 31: Documentation & Hackathon Submission
+### Task 33: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -761,11 +848,13 @@ export class UserController extends ClaireController {
 | 21 | ClaireException — Error Classes | ✅ Done |
 | 22 | Scoped Middleware — Three Levels | ✅ Done |
 | 23 | Developer Experience — Terminal Polish | ✅ Done |
-| 24 | ClaireValidator — Validation | ⬜ Next |
-| 25 | Pre-built Exceptions | ⬜ Pending |
-| 26 | Pre-built Middlewares | ⬜ Pending |
-| 27 | RouterGroup — Prefixes | ⬜ Pending |
-| 28 | Plugin System | ⬜ Pending |
-| 29 | Typed Handler Enforcement | ⬜ Pending |
-| 30 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 31 | Documentation & Submission | ⬜ Final |
+| 24 | ClaireValidator — Abstract Class & Rules | ✅ Done |
+| 25 | ClaireContext — Validated Body Storage | ✅ Done |
+| 26 | ClaireValidator — Integration & Testing | ✅ Done |
+| 27 | Pre-built Exceptions | ⬜ Pending |
+| 28 | Pre-built Middlewares | ⬜ Pending |
+| 29 | RouterGroup — Prefixes | ⬜ Pending |
+| 30 | Plugin System | ⬜ Pending |
+| 31 | Typed Handler Enforcement | ⬜ Pending |
+| 32 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 33 | Documentation & Submission | ⬜ Final |
