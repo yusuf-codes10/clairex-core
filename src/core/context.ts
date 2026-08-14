@@ -12,4 +12,12 @@ export class ClaireContext {
         this.request = new ClaireRequest(req);
         this.response = new ClaireResponse();
     }
+
+    set setBody(data: unknown) {
+        this._valid = data;
+    }
+
+    body<T>(): T {
+        return this._valid as T;
+    }
 }
