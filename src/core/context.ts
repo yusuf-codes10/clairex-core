@@ -6,6 +6,8 @@ export class ClaireContext {
     public request: ClaireRequest;
     public response: ClaireResponse;
 
+    private _valid: unknown = {};
+
     constructor (req: Request) {
         this.request = new ClaireRequest(req);
         this.response = new ClaireResponse();
