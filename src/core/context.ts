@@ -17,7 +17,7 @@ export class ClaireContext {
         this._valid = data;
     }
 
-    body<T>(): T {
+    valid<T>(): T {
         return this._valid as T;
     }
 }
