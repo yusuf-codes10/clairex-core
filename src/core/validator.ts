@@ -69,7 +69,8 @@ export abstract class ClaireValidator extends ClaireMiddleware {
         }
       }
 
-      //   store validated body somewhere
     }
+    //   store validated body somewhere
+    c.setBody = body;
   }
 }
