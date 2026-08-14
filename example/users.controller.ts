@@ -4,6 +4,7 @@ import { ClaireException } from "../src/core/exception";
 import { logger } from "./logger";
 import { middle } from "./middlewares/middle";
 import { inner } from "./middlewares/inner";
+import { userValidator } from "./validators/userValidator";
 
 type User = {
     id: number,
@@ -25,7 +26,7 @@ export class userController extends ClaireController {
 
     register () {
         this.routes('get', '/', this.getUsers);
-        this.routes('post', '/', this.createUser, [new inner()]);
+        this.routes('post', '/', this.createUser, [new inner(), new userValidator()]);
         this.routes('get', '/:id', this.getUserById);
     }
 
@@ -42,7 +43,8 @@ export class userController extends ClaireController {
     }
 
     private async createUser  (c: ClaireContext) {
-        const body = (await c.request.json()) as {id: number, name: string, age: number};
+        // const body = (await c.request.json()) as {id: number, name: string, age: number};
+        const body = c.body<User>();
         if (users.find(u => u.id === body.id)) {
             return new ClaireException(400, 'User id already exists!').toResponse();
         }
