@@ -2,6 +2,22 @@ import { ClaireRouter } from "./router";
 import type { RouterEntry, ClaireHandler } from "./types";
 import { ClaireMiddleware } from "./middleware";
 
+/**
+ * Abstract base class for defining a self-contained unit of routes, handlers, and middleware.
+ * Extend this class to create a cell for each resource in your API.
+ *
+ * @example
+ * export class UserCell extends ClaireCell {
+ *     constructor() {
+ *         super('/users', [new AuthGuard()]);
+ *     }
+ *
+ *     register() {
+ *         this.routes('get', '/', this.getUsers);
+ *         this.routes('post', '/', this.createUser, [new UserValidator()]);
+ *     }
+ * }
+ */
 export abstract class ClaireCell {
   protected _router = new ClaireRouter();
   protected prefix: string;
@@ -15,8 +31,31 @@ export abstract class ClaireCell {
     this.register(); // have to call the register method after we have the prefix
   }
 
+  /**
+   * Define your routes and handlers here.
+   * Called automatically in the constructor after the prefix is set.
+   *
+   * @abstract
+   * @example
+   * register() {
+   *     this.routes('get', '/', this.getAll);
+   *     this.routes('post', '/', this.create, [new MyValidator()]);
+   * }
+   */
   protected abstract register(): void;
 
+  /**
+   * Registers a route on this cell with an optional array of route-level middlewares.
+   *
+   * @param method - The HTTP method (get, post, put, patch, delete).
+   * @param path - The route path, appended to the cell's prefix.
+   * @param handler - The handler method for this route.
+   * @param middleware - Optional array of middlewares scoped to this route only.
+   *
+   * @example
+   * this.routes('get', '/:id', this.getById);
+   * this.routes('post', '/', this.create, [new UserValidator()]);
+   */
   protected routes(
     method: "get" | "post" | "put" | "patch" | "delete",
     path: string,
