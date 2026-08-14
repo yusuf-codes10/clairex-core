@@ -13,7 +13,7 @@ export class ClaireContext {
         this.response = new ClaireResponse();
     }
 
-    set setBody(data: unknown) {
+    set body(data: unknown) {
         this._valid = data;
     }
 
