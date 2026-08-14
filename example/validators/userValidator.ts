@@ -4,9 +4,9 @@ import type { ValidationSchema } from '../../src/core/types'
 export class userValidator extends ClaireValidator {
     override rules(): ValidationSchema{
         return {
-            id: {type: 'number'},
-            name: {type: 'string'},
-            age: {type: 'number'}
+            id: {type: 'number', required: true},
+            name: {type: 'string', required: true},
+            age: {type: 'number', required: true}
         }
     }
 }
