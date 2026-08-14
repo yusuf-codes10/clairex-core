@@ -2,11 +2,11 @@ import { ClaireRouter } from "./router";
 import type { RouterEntry, ClaireHandler } from "./types";
 import { ClaireMiddleware } from "./middleware";
 
-export abstract class ClaireController {
+export abstract class ClaireCell {
   protected _router = new ClaireRouter();
   protected prefix: string;
 
-  // each ClaireController has its own middleware chain
+  // each Cell has its own middleware chain
   private _middlewareChain?: ClaireMiddleware[] = [];
 
   constructor(prefix: string, middlewares: ClaireMiddleware[] = []) {

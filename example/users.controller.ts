@@ -1,4 +1,4 @@
-import { ClaireController } from "../src/core/controller";
+import { ClaireCell } from "../src/core/cell";
 import { ClaireContext } from "../src/core/context";
 import { ClaireException } from "../src/core/exception";
 import { logger } from "./logger";
@@ -18,7 +18,7 @@ const users: User[] = [
   { id: 3, name: "Veronica", age: 28 },
 ];
 
-export class userController extends ClaireController {
+export class userController extends ClaireCell {
 
     constructor () {
         super('/users', [new logger(), new middle()]);
