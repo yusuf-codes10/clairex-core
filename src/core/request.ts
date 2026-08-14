@@ -11,18 +11,55 @@ export class ClaireRequest {
     this._method = req.method;
   }
 
+  /**
+   * Parses and returns the request body as JSON.
+   * Returns `unknown` — use ClaireValidator to get typed data via `c.valid<T>()`.
+   *
+   * @returns The parsed JSON body.
+   *
+   * @example
+   * const body = await c.request.json();
+   */
   async json(): Promise<unknown> {
     return await this.raw.json();
   }
 
+  /**
+   * Returns the request body as a plain text string.
+   *
+   * @returns The raw body text.
+   *
+   * @example
+   * const body = await c.request.text();
+   */
   async text(): Promise<string> {
     return await this.raw.text();
   }
 
+  /**
+   * Returns the URL query parameters as a single-value object.
+   * If a key appears multiple times, only the last value is kept.
+   *
+   * @returns The query parameters as key-value pairs.
+   *
+   * @example
+   * // URL: /users?page=1&limit=10
+   * c.request.query // { page: "1", limit: "10" }
+   */
   get query(): Record<string, string> {
     return Object.fromEntries(this._url.searchParams);
   }
 
+  /**
+   * Returns the URL query parameters as a multi-value object.
+   * Preserves all values for repeated keys.
+   *
+   * @returns The query parameters with arrays of values per key.
+   *
+   * @example
+   * // URL: /users?tag=admin&tag=editor
+   * c.request.queries // { tag: ["admin", "editor"] }
+   */
   get queries(): Record<string, string[]> {
     const result: Record<string, string[]> = {};
     for (const key of this._url.searchParams.keys()) {
@@ -47,6 +84,15 @@ export class ClaireRequest {
   //   return this._params;
   // }
 
+  /**
+   * Returns all request headers as a single-value object.
+   *
+   * @returns The headers as key-value pairs.
+   *
+   * @example
+   * const token = c.request.headers.authorization;
+   * const contentType = c.request.headers['content-type'];
+   */
   get headers(): Record<string, string> {
     return Object.fromEntries(this.raw.headers);
   }

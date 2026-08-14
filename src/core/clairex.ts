@@ -4,21 +4,58 @@ import { clairexBanner, matchRoute } from "./utils";
 import { ClaireMiddleware } from "./middleware";
 import { ClaireException } from "./exception";
 import { ClaireLogger } from "../middleware/ClaireLogger";
+
+/**
+ * The main application class for ClaireX.
+ * Extends ClaireRouter — the app IS the router.
+ * Create an instance, register routes or mount cells, and call listen().
+ *
+ * @example
+ * const app = new ClaireX(3000);
+ * app.mount(new UserCell());
+ * app.use(new AuthGuard());
+ * app.listen();
+ */
 export class ClaireX extends ClaireRouter {
   private port;
 
   private _middlewareChain: ClaireMiddleware[] = [];
 
+  /**
+   * Creates a new ClaireX application.
+   *
+   * @param port - The port to listen on. Defaults to 3000.
+   *
+   * @example
+   * const app = new ClaireX(8080);
+   */
   constructor(port?: number) {
     super();
     this.port = port ?? 3000;
     this._middlewareChain.push(new ClaireLogger());
   }
 
+  /**
+   * Registers a global middleware that runs on every route.
+   * Order matters — middlewares execute in the order they are registered.
+   *
+   * @param middleware - An instance of a class extending ClaireMiddleware.
+   *
+   * @example
+   * app.use(new AuthGuard());
+   * app.use(new RateLimiter());
+   */
   use(middleware: ClaireMiddleware): void {
     this._middlewareChain.push(middleware);
   }
 
+  /**
+   * Starts the server on the configured port.
+   * Registers the Bun.serve fetch handler with route matching, middleware execution, and error handling.
+   *
+   * @example
+   * app.listen();
+   */
   listen() {
     Bun.serve({
       port: this.port,
