@@ -726,7 +726,7 @@ export class userController extends ClaireController {
 
 ---
 
-### Task 27: Pre-built Exceptions — Subclasses
+### Task 28: Pre-built Exceptions — Subclasses
 **Relates to:** Task 21  
 **Dependencies:** Task 21 (base ClaireException)
 
@@ -821,6 +821,34 @@ export class userController extends ClaireController {
 
 ---
 
+### Task 27: Naming Refactor — ClaireCell & Context Methods ✅
+**Commits:** `87f6fa5`, `ab94073`, `97346d7`
+
+**What was done:**
+- Renamed `ClaireController` → `ClaireCell` — a "cell" is a self-contained unit of routes + handlers + middleware for one resource
+- Renamed `c.setBody` → `c.body` (setter) — simpler, intuitive
+- Renamed `c.body<T>()` → `c.valid<T>()` (getter method) — communicates "this data is validated"
+- Updated all imports and references
+
+**Why ClaireCell:**
+- Inspired by Resident Evil: Code Veronica — Claire starts the game in a prison cell
+- A cell is self-contained, isolated, complete — exactly what this class is
+- "Build a cell" = define routes, handlers, and middleware for one resource
+- Not a "controller" in the traditional MVC sense — it's more than that (owns middleware, owns prefix, self-registers)
+
+**Updated API:**
+```typescript
+// Before:
+export class UserController extends ClaireController { ... }
+const body = c.body<User>();
+
+// After:
+export class UserCell extends ClaireCell { ... }
+const body = c.valid<User>();
+```
+
+---
+
 ## Summary
 
 | # | Task | Status |
@@ -839,7 +867,7 @@ export class userController extends ClaireController {
 | 12 | Integration Test — POST & Body Parsing | ✅ Done |
 | 13 | ClaireRouter — Dynamic Params | ✅ Done |
 | 14 | ClaireRouter — Routes Getter & Mount | ✅ Done |
-| 15 | ClaireController — Class-Based Controllers | ✅ Done |
+| 15 | ClaireCell — Class-Based Cells | ✅ Done |
 | 16 | Types Extraction | ✅ Done |
 | 17 | ClaireHandler Type | ✅ Done |
 | 18 | ClaireMiddleware — Before/After Model | ✅ Done |
@@ -851,10 +879,11 @@ export class userController extends ClaireController {
 | 24 | ClaireValidator — Abstract Class & Rules | ✅ Done |
 | 25 | ClaireContext — Validated Body Storage | ✅ Done |
 | 26 | ClaireValidator — Integration & Testing | ✅ Done |
-| 27 | Pre-built Exceptions | ⬜ Pending |
-| 28 | Pre-built Middlewares | ⬜ Pending |
-| 29 | RouterGroup — Prefixes | ⬜ Pending |
-| 30 | Plugin System | ⬜ Pending |
-| 31 | Typed Handler Enforcement | ⬜ Pending |
-| 32 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 33 | Documentation & Submission | ⬜ Final |
+| 27 | Naming Refactor — ClaireCell & Methods | ✅ Done |
+| 28 | Pre-built Exceptions | ⬜ Pending |
+| 29 | Pre-built Middlewares | ⬜ Pending |
+| 30 | RouterGroup — Prefixes | ⬜ Pending |
+| 31 | Plugin System | ⬜ Pending |
+| 32 | Typed Handler Enforcement | ⬜ Pending |
+| 33 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 34 | Documentation & Submission | ⬜ Final |
