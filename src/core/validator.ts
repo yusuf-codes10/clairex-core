@@ -2,7 +2,46 @@ import type { ClaireContext } from "./context";
 import { ClaireException } from "./exception";
 import { ClaireMiddleware } from "./middleware";
 import type { ValidationRule, ValidationSchema } from '../core/types';
+
+/**
+ * Abstract base class for request body validation.
+ * Extends ClaireMiddleware — validation runs as a middleware in the before() lifecycle.
+ * Extend this class and define rules() to validate incoming request bodies.
+ *
+ * @example
+ * export class UserValidator extends ClaireValidator {
+ *     override rules(): ValidationSchema {
+ *         return {
+ *             name: { type: 'string', required: true, min: 3 },
+ *             age: { type: 'number', required: true, min: 18 }
+ *         }
+ *     }
+ * }
+ *
+ * // Attach as route-level middleware:
+ * this.routes('post', '/', this.createUser, [new UserValidator()]);
+ *
+ * // Access validated data in handler:
+ * const body = c.valid<User>();
+ */
 export abstract class ClaireValidator extends ClaireMiddleware {
+
+    /**
+   * Define the validation schema for the request body.
+   * Each key represents a field, and its value defines the validation rules.
+   *
+   * @abstract
+   * @returns The validation schema for the expected body shape.
+   *
+   * @example
+   * override rules(): ValidationSchema {
+   *     return {
+   *         id: { type: 'number', required: true },
+   *         name: { type: 'string', required: true, min: 2, max: 50 },
+   *         age: { type: 'number', required: true, min: 18 }
+   *     }
+   * }
+   */
   abstract rules(): ValidationSchema;
 
   override async before(c: ClaireContext) {
