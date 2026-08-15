@@ -1,8 +1,4 @@
 import { ClaireX } from "../src";
-import { userKey } from './keys/users.key';
+import { userKey } from "./keys/users.key";
 
-const app = new ClaireX(2300);
-
-app.mount(new userKey());
-
-app.listen();
+new ClaireX(2300).mount(new userKey()).listen();

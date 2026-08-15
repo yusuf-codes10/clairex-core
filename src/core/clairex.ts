@@ -47,8 +47,9 @@ export class ClaireX {
    * app.use(new AuthGuard());
    * app.use(new RateLimiter());
    */
-  use(middleware: ClaireMiddleware): void {
+  use(middleware: ClaireMiddleware): this {
     this._middlewareChain.push(middleware);
+    return this;
   }
 
   /**
@@ -61,12 +62,13 @@ export class ClaireX {
    * app.mount(new UserKey());
    * app.mount(new PostKey());
    */
-  mount(key: ClaireKey): void {
+  mount(key: ClaireKey): this {
     const tagged = key.router.map((route) => ({
       ...route,
       middlewares: key.middlewares,
     }));
     this._router.routes.push(...tagged);
+    return this;
   }
 
   /**
@@ -76,7 +78,7 @@ export class ClaireX {
    * @example
    * app.listen();
    */
-  listen() {
+  listen(): void {
     Bun.serve({
       port: this.port,
 
