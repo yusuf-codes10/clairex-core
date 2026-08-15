@@ -849,6 +849,58 @@ const body = c.valid<User>();
 
 ---
 
+### Task 28: ClaireKey Rebrand & Composition Refactor ✅
+**Commits:** `c00a220`, `457c946`, `109c203`, `4c919a1`, `131001d`, `11a69b7`, `6779278`, `c20bf28`
+
+**What was done:**
+- Renamed `ClaireCell` → `ClaireKey` — inspired by Claire Redfield's lockpick/key items in Resident Evil
+- ClaireX no longer extends ClaireRouter — switched to composition (`private _router = new ClaireRouter()`)
+- Removed inline routing mode (`app.get()`, `app.post()` etc.) — ClaireKey is THE way to define routes
+- Moved `mount()` from ClaireRouter to ClaireX, renamed to `unlock()` — "unlock a resource using a key"
+- Implemented method chaining: `use()` and `unlock()` return `this`, `listen()` returns `void` (terminates chain)
+- ClaireX now exposes only 3 methods: `unlock()`, `use()`, `listen()`
+- Example folder restructured: `cells/` → `keys/`
+- Old approach preserved in `draft/src/` for reference
+
+**Why ClaireKey:**
+- Claire Redfield's signature ability is lockpicking — unlocking access to new areas
+- A ClaireKey "unlocks" access to one resource in your API
+- ClaireKey replaces 4-5 concepts other frameworks need: controller + router group + plugin + middleware scope + module
+- One class = one resource = routes + handlers + scoped middleware. Self-contained.
+
+**Why composition over inheritance:**
+- ClaireX is NOT a router — it's the application orchestrator
+- Users cannot call `app.get()` or `app.post()` — forces the ClaireKey pattern
+- Clean separation: ClaireRouter = route storage, ClaireX = lifecycle + middleware + mounting
+- ClaireKey uses ClaireRouter internally (for route registration). ClaireX uses ClaireRouter internally (for route storage). Neither inherits.
+
+**Method chaining:**
+```typescript
+const app = new ClaireX(3000)
+    .unlock(new UserKey())
+    .unlock(new PostKey())
+    .use(new AuthGuard())
+    .listen();
+```
+
+- `unlock()` returns `this` — chain multiple keys
+- `use()` returns `this` — chain multiple middlewares
+- `listen()` returns `void` — terminates the chain, starts the server
+
+**ClaireX public API (final):**
+```typescript
+class ClaireX {
+    constructor(port?: number);
+    unlock(key: ClaireKey): this;
+    use(middleware: ClaireMiddleware): this;
+    listen(): void;
+}
+```
+
+Three methods. That's it. Everything else is done through ClaireKey.
+
+---
+
 ## Summary
 
 | # | Task | Status |
@@ -867,7 +919,7 @@ const body = c.valid<User>();
 | 12 | Integration Test — POST & Body Parsing | ✅ Done |
 | 13 | ClaireRouter — Dynamic Params | ✅ Done |
 | 14 | ClaireRouter — Routes Getter & Mount | ✅ Done |
-| 15 | ClaireCell — Class-Based Cells | ✅ Done |
+| 15 | ClaireKey — Class-Based Keys | ✅ Done |
 | 16 | Types Extraction | ✅ Done |
 | 17 | ClaireHandler Type | ✅ Done |
 | 18 | ClaireMiddleware — Before/After Model | ✅ Done |
@@ -880,10 +932,9 @@ const body = c.valid<User>();
 | 25 | ClaireContext — Validated Body Storage | ✅ Done |
 | 26 | ClaireValidator — Integration & Testing | ✅ Done |
 | 27 | Naming Refactor — ClaireCell & Methods | ✅ Done |
-| 28 | Pre-built Exceptions | ⬜ Pending |
-| 29 | Pre-built Middlewares | ⬜ Pending |
-| 30 | RouterGroup — Prefixes | ⬜ Pending |
-| 31 | Plugin System | ⬜ Pending |
-| 32 | Typed Handler Enforcement | ⬜ Pending |
-| 33 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 34 | Documentation & Submission | ⬜ Final |
+| 28 | ClaireKey Rebrand & Composition Refactor | ✅ Done |
+| 29 | Pre-built Exceptions | ⬜ Next |
+| 30 | Pre-built Middlewares | ⬜ Pending |
+| 31 | Typed Handler Enforcement | ⬜ Pending |
+| 32 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 33 | Documentation & Submission | ⬜ Final |
