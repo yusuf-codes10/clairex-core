@@ -8,12 +8,12 @@ import { ClaireKey } from "./key";
 
 /**
  * The main application class for ClaireX.
- * Extends ClaireRouter — the app IS the router.
- * Create an instance, register routes or mount cells, and call listen().
+ * Uses composition — owns a ClaireRouter internally for route storage.
+ * Create an instance, mount your keys, register global middleware, and call listen().
  *
  * @example
  * const app = new ClaireX(3000);
- * app.mount(new UserCell());
+ * app.mount(new UserKey());
  * app.use(new AuthGuard());
  * app.listen();
  */
@@ -51,11 +51,20 @@ export class ClaireX {
     this._middlewareChain.push(middleware);
   }
 
-  mount(controller: ClaireKey): void {
-    // every route now carries the controller middleware
-    const tagged = controller.router.map((route) => ({
+  /**
+   * Mounts a ClaireKey onto the application.
+   * Collects all routes from the key and tags them with the key's scoped middlewares.
+   *
+   * @param key - An instance of a class extending ClaireKey.
+   *
+   * @example
+   * app.mount(new UserKey());
+   * app.mount(new PostKey());
+   */
+  mount(key: ClaireKey): void {
+    const tagged = key.router.map((route) => ({
       ...route,
-      middlewares: controller.middlewares,
+      middlewares: key.middlewares,
     }));
     this._router.routes.push(...tagged);
   }
@@ -133,7 +142,6 @@ export class ClaireX {
             }
 
             return response;
-            // return route.handler(context);
           }
 
           return new ClaireException(404, "Route Not Found!").toResponse();
