@@ -57,7 +57,7 @@ export class userKey extends ClaireKey {
         // garb the user id
         const {id} = c.request.params;
         // grabing the name from the body
-        const {name} = c.valid();
+        const { name } = c.valid<User>();
 
         const foundUser = users.find(u => u.id === Number(id));
 
