@@ -1,6 +1,8 @@
 import { ClaireRouter } from "./router";
 import type { RouterEntry, ClaireHandler } from "./types";
 import { ClaireMiddleware } from "./middleware";
+import { ClaireValidator } from "./validator";
+import { ClaireException } from "./exception";
 
 /**
  * Abstract base class for defining a self-contained unit of routes, handlers, and middleware.
@@ -26,6 +28,11 @@ export abstract class ClaireKey {
   private _middlewareChain?: ClaireMiddleware[] = [];
 
   constructor(prefix: string, middlewares: ClaireMiddleware[] = []) {
+    for (const mw of middlewares) {
+          if (mw instanceof ClaireValidator) {
+            throw new ClaireException(500, 'Validators must be used on the route level only!').toResponse();
+          }
+    }
     this._middlewareChain = middlewares;
     this.prefix = prefix;
     this.register(); // have to call the register method after we have the prefix
