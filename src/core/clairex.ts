@@ -5,6 +5,7 @@ import { ClaireMiddleware } from "./middleware";
 import { ClaireException } from "./exception";
 import { ClaireLogger } from "../middleware/ClaireLogger";
 import { ClaireKey } from "./key";
+import { ClaireValidator } from "./validator";
 
 /**
  * The main application class for ClaireX.
@@ -48,6 +49,9 @@ export class ClaireX {
    * app.use(new RateLimiter());
    */
   use(middleware: ClaireMiddleware): this {
+    if (middleware instanceof ClaireValidator) {
+      throw new ClaireException(500, 'Validators must be used on the route level!').toResponse();
+    }
     this._middlewareChain.push(middleware);
     return this;
   }
