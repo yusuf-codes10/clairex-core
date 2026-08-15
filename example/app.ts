@@ -1,5 +1,5 @@
 import { ClaireX } from "../src";
-import { userKey } from './cells/users.key';
+import { userKey } from './keys/users.key';
 
 const app = new ClaireX(2300);
 
