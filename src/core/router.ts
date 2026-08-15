@@ -1,4 +1,4 @@
-import { ClaireController } from "./key";
+import { ClaireKey } from "./key";
 import type { RouterEntry, ClaireHandler } from "./types";
 
 export class ClaireRouter {
@@ -32,7 +32,7 @@ export class ClaireRouter {
     return this._routes;
   }
 
-  mount(controller: ClaireController): void {
+  mount(controller: ClaireKey): void {
     // every route now carries the controller middleware
     const tagged = controller.router.map((route) => ({
       ...route,
