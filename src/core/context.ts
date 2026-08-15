@@ -1,5 +1,6 @@
 import { ClaireRequest } from "./request";
 import { ClaireResponse } from "./response";
+import { ClaireException } from "./exception";
 
 export class ClaireContext {
   // composition of both ClaireRouter & ClaireResponse here
@@ -28,6 +29,17 @@ export class ClaireContext {
    * const user = c.valid<User>();
    */
   valid<T>(): T {
+    if (
+      this._valid === undefined ||
+      (typeof this._valid === "object" &&
+        Object.keys(this._valid as object).length === 0)
+    ) {
+      throw new ClaireException(
+        500,
+        "No validated body found. Did you forget to attach a ClaireValidator middleware to this route?",
+      );
+    }
+
     return this._valid as T;
   }
 }
