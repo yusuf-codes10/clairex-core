@@ -29,7 +29,7 @@ export class userKey extends ClaireKey {
         this.routes('get', '/', this.getUsers);
         this.routes('post', '/', this.createUser, [new inner(), new userValidator()]);
         this.routes('get', '/:id', this.getUserById);
-        this.routes('patch', '/:id', this.updateUserName, [new updateUserValidator()]);
+        this.routes('patch', '/:id', this.updateUserName);
     }
 
     private getUsers (c: ClaireContext) {
