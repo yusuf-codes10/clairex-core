@@ -53,16 +53,16 @@ export class ClaireX {
   }
 
   /**
-   * Mounts a ClaireKey onto the application.
-   * Collects all routes from the key and tags them with the key's scoped middlewares.
+   * Unlocks a resource into the application using a ClaireKey.
+   * A key grants access to its routes, handlers, and scoped middlewares.
    *
    * @param key - An instance of a class extending ClaireKey.
    *
    * @example
-   * app.mount(new UserKey());
-   * app.mount(new PostKey());
+   * app.unlock(new UserKey());
+   * app.unlock(new PostKey());
    */
-  mount(key: ClaireKey): this {
+  unlock(key: ClaireKey): this {
     const tagged = key.router.map((route) => ({
       ...route,
       middlewares: key.middlewares,
