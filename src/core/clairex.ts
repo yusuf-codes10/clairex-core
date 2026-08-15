@@ -16,10 +16,12 @@ import { ClaireLogger } from "../middleware/ClaireLogger";
  * app.use(new AuthGuard());
  * app.listen();
  */
-export class ClaireX extends ClaireRouter {
+export class ClaireX {
   private port;
 
   private _middlewareChain: ClaireMiddleware[] = [];
+
+  private _router = new ClaireRouter();
 
   /**
    * Creates a new ClaireX application.
@@ -30,7 +32,6 @@ export class ClaireX extends ClaireRouter {
    * const app = new ClaireX(8080);
    */
   constructor(port?: number) {
-    super();
     this.port = port ?? 3000;
     this._middlewareChain.push(new ClaireLogger());
   }
@@ -64,7 +65,7 @@ export class ClaireX extends ClaireRouter {
         try {
           const context = new ClaireContext(req);
 
-          for (const route of this.routes) {
+          for (const route of this._router.routes) {
             if (route.method !== context.request.method) continue; //skip to next iteration
 
             const params = matchRoute(route.pattern, context.request.pathname);
