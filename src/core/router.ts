@@ -31,13 +31,4 @@ export class ClaireRouter {
   get routes(): RouterEntry[] {
     return this._routes;
   }
-
-  mount(controller: ClaireKey): void {
-    // every route now carries the controller middleware
-    const tagged = controller.router.map((route) => ({
-      ...route,
-      middlewares: controller.middlewares,
-    }));
-    this._routes.push(...tagged);
-  }
 }

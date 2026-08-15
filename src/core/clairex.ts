@@ -4,6 +4,7 @@ import { clairexBanner, matchRoute } from "./utils";
 import { ClaireMiddleware } from "./middleware";
 import { ClaireException } from "./exception";
 import { ClaireLogger } from "../middleware/ClaireLogger";
+import { ClaireKey } from "./key";
 
 /**
  * The main application class for ClaireX.
@@ -48,6 +49,15 @@ export class ClaireX {
    */
   use(middleware: ClaireMiddleware): void {
     this._middlewareChain.push(middleware);
+  }
+
+  mount(controller: ClaireKey): void {
+    // every route now carries the controller middleware
+    const tagged = controller.router.map((route) => ({
+      ...route,
+      middlewares: controller.middlewares,
+    }));
+    this._router.routes.push(...tagged);
   }
 
   /**
