@@ -30,7 +30,7 @@ export abstract class ClaireKey {
   constructor(prefix: string, middlewares: ClaireMiddleware[] = []) {
     for (const mw of middlewares) {
           if (mw instanceof ClaireValidator) {
-            throw new ClaireException(500, 'Validators must be used on the route level only!').toResponse();
+            throw new ClaireException(500, 'Validators must be used on the route level only!');
           }
     }
     this._middlewareChain = middlewares;
