@@ -28,6 +28,7 @@ export class userKey extends ClaireKey {
         this.routes('get', '/', this.getUsers);
         this.routes('post', '/', this.createUser, [new inner(), new userValidator()]);
         this.routes('get', '/:id', this.getUserById);
+        this.routes('patch', '/:id', this.updateUserName)
     }
 
     private getUsers (c: ClaireContext) {
@@ -50,5 +51,14 @@ export class userKey extends ClaireKey {
         }
         users.push(body);
         return c.response.json(users);
+    }
+
+    private updateUserName (c: ClaireContext) {
+        // garb the user id
+        const {id} = c.request.params;
+
+        const foundUser = users.find(u => u.id === Number(id));
+
+        if (!foundUser) return new ClaireException(404, 'user not found!');
     }
 }
