@@ -22,7 +22,7 @@ const users: User[] = [
 export class userKey extends ClaireKey {
 
     constructor () {
-        super('/users', [new logger(), new middle()]);
+        super('/users', [new logger(), new middle(), new updateUserValidator()]);
     }
 
     register () {
