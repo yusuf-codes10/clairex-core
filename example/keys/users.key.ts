@@ -56,9 +56,15 @@ export class userKey extends ClaireKey {
     private updateUserName (c: ClaireContext) {
         // garb the user id
         const {id} = c.request.params;
+        // grabing the name from the body
+        const {name} = c.valid();
 
         const foundUser = users.find(u => u.id === Number(id));
 
-        if (!foundUser) return new ClaireException(404, 'user not found!');
+        if (!foundUser) return new ClaireException(404, 'user not found!').toResponse();
+
+        foundUser.name = name;
+
+        return c.response.json(users);
     }
 }
