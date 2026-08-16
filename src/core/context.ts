@@ -43,4 +43,11 @@ export class ClaireContext {
 
     return this._valid as T;
   }
+
+  auth<T>(): T {
+    if(!this._auth) {
+      throw new ClaireException(500, 'No auth payload found. Did you forget to attach a ClaireJWT middleware?');
+    }
+    return this._auth as T;
+  }
 }
