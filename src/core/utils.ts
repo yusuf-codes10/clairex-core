@@ -220,7 +220,7 @@ export const verifyToken = async (
   const isValid: boolean = await crypto.subtle.verify(
     'HMAC',
     key,
-    signatureBytes,
+    signatureBytes.buffer as ArrayBuffer,
     encoder.encode(signingInput)
   );
 
