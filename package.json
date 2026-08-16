@@ -2,7 +2,11 @@
   "name": "clairex-core",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target bun && bunx tsc -p tsconfig.build.json",
     "dev": "bun run src/index.ts",
