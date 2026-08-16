@@ -315,12 +315,6 @@ app.mount(new UserController());
 
 ---
 
-## Remaining Tasks
-
-These tasks represent the next features to implement.
-
----
-
 ### Task 17: ClaireHandler Type — Replacing `Function` ✅
 **Commits:** `1645c29`, `7819245`, `ed85e22`
 
