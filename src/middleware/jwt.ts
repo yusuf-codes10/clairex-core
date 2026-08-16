@@ -4,6 +4,13 @@ import { ClaireMiddleware } from "../core/middleware";
 import { verifyToken } from "../core/utils";
 
 export class ClaireJWT extends ClaireMiddleware {
+    private _secret: string;
+
+    constructor(secret: string) {
+        super();
+        this._secret = secret;
+    }
+
     override async before(c: ClaireContext) {
         const authHeader = c.request.headers.get('authorization');
 
