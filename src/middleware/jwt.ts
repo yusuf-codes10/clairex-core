@@ -1,9 +1,10 @@
 import type { ClaireContext } from "../core/context";
 import { ClaireException } from "../core/exception";
 import { ClaireMiddleware } from "../core/middleware";
+import { verifyToken } from "../core/utils";
 
 export class ClaireJWT extends ClaireMiddleware {
-    override before(c: ClaireContext) {
+    override async before(c: ClaireContext) {
         const authHeader = c.request.headers.get('authorization');
 
         // 1. Check if the header exists
@@ -12,11 +13,12 @@ export class ClaireJWT extends ClaireMiddleware {
         }
 
         // 2. Extract token
-        const token = authHeader.split(' ')[1];
+        const token = authHeader.split(' ')[1] as string;
 
         // 3. Verify token
         try {
-            // const payload = 
+            const payload = await verifyToken(token, '');
+            c.setAuth = payload;
         } catch {
             return new ClaireException(401, 'Invalid or Expired token').toResponse();
         }
