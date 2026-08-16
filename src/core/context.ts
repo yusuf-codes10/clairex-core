@@ -50,4 +50,8 @@ export class ClaireContext {
     }
     return this._auth as T;
   }
+
+  set setAuth(data: Record<string, unknown>) {
+    this._auth = data;
+  }
 }
