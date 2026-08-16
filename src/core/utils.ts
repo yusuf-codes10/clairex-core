@@ -184,3 +184,58 @@ export const signToken = async (
   const encodedSignature: string = base64urlEncode(new Uint8Array(signature));
   return `${signingInput}.${encodedSignature}`;
 };
+
+
+
+/**
+ * Verifies a JWT token and returns the decoded payload if valid.
+ * Checks signature integrity and expiration.
+ *
+ * @param token - The JWT string to verify.
+ * @param secret - The secret key used to verify the signature.
+ * @returns The decoded payload if the token is valid.
+ * @throws Error if the token is malformed, signature is invalid, or token is expired.
+ *
+ * @example
+ * const payload = await verifyToken(token, 'my-secret');
+ * // payload = { userId: 1, role: 'admin', iat: ..., exp: ... }
+ */
+export const verifyToken = async (
+  token: string,
+  secret: string
+): Promise<Record<string, unknown>> => {
+  const parts: string[] = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Malformed JWT: expected 3 parts');
+  }
+
+  const [encodedHeader, encodedPayload, encodedSignature] = parts as [string, string, string];
+  const signingInput: string = `${encodedHeader}.${encodedPayload}`;
+
+  // Verify signature
+  const key: CryptoKey = await createSigningKey(secret);
+  const encoder: TextEncoder = new TextEncoder();
+  const signatureBytes: Uint8Array = base64urlDecode(encodedSignature);
+
+  const isValid: boolean = await crypto.subtle.verify(
+    'HMAC',
+    key,
+    signatureBytes,
+    encoder.encode(signingInput)
+  );
+
+  if (!isValid) {
+    throw new Error('Invalid JWT signature');
+  }
+
+  // Decode payload
+  const payloadJson: string = new TextDecoder().decode(base64urlDecode(encodedPayload));
+  const payload: Record<string, unknown> = JSON.parse(payloadJson);
+
+  // Check expiration
+  if (typeof payload.exp === 'number' && payload.exp < Math.floor(Date.now() / 1000)) {
+    throw new Error('JWT expired');
+  }
+
+  return payload;
+};
