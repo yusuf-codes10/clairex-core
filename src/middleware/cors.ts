@@ -35,7 +35,21 @@ export class ClaireCors extends ClaireMiddleware {
     }
   }
 
-  override after() {
+  override after(c: ClaireContext, response: Response): Response {
     // add cors headers
+    response.headers.set("Access-Control-Allow-Origin", this._origin);
+    response.headers.set(
+      "Access-Control-Allow-Methods",
+      this._allowedMethods.join(", "),
+    );
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      this._alloweHeaders.join(", "),
+    );
+    response.headers.set(
+      "Access-Control-Expose-Headers",
+      this._exposeHeaders.join(", "),
+    );
+    return response;
   }
 }
