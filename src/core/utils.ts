@@ -104,7 +104,83 @@ export const colorMethod = (method: string): string => {
 };
 
 
-// JWT verifyToken utility
-export const verifyToken = () => {
-  
-}
+// ─── JWT Utilities (zero external dependencies) ───────────────────────────────
+
+/**
+ * Base64url encodes a string or Uint8Array.
+ */
+const base64urlEncode = (data: string | Uint8Array): string => {
+  const str: string = typeof data === 'string'
+    ? btoa(data)
+    : btoa(String.fromCharCode(...data));
+  return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+};
+
+/**
+ * Base64url decodes a string to raw bytes.
+ */
+const base64urlDecode = (str: string): Uint8Array => {
+  const padded: string = str.replace(/-/g, '+').replace(/_/g, '/');
+  const binary: string = atob(padded);
+  const bytes: Uint8Array = new Uint8Array(binary.length);
+  for (let i: number = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+
+/**
+ * Creates the HMAC-SHA256 signing key from a secret string.
+ */
+const createSigningKey = async (secret: string): Promise<CryptoKey> => {
+  const encoder: TextEncoder = new TextEncoder();
+  return await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+};
+
+/**
+ * Signs a JWT and returns the token string.
+ * Uses HMAC-SHA256 algorithm via Bun's built-in crypto.subtle.
+ *
+ * @param payload - The data to encode in the token (e.g., userId, role).
+ * @param secret - The secret key used to sign the token.
+ * @param expiresInSeconds - Token expiry time in seconds from now. Defaults to 3600 (1 hour).
+ * @returns The signed JWT string.
+ *
+ * @example
+ * const token = await signToken({ userId: 1, role: 'admin' }, 'my-secret', 3600);
+ */
+export const signToken = async (
+  payload: Record<string, unknown>,
+  secret: string,
+  expiresInSeconds: number = 3600
+): Promise<string> => {
+  const header: Record<string, string> = { alg: 'HS256', typ: 'JWT' };
+  const now: number = Math.floor(Date.now() / 1000);
+
+  const fullPayload: Record<string, unknown> = {
+    ...payload,
+    iat: now,
+    exp: now + expiresInSeconds,
+  };
+
+  const encodedHeader: string = base64urlEncode(JSON.stringify(header));
+  const encodedPayload: string = base64urlEncode(JSON.stringify(fullPayload));
+  const signingInput: string = `${encodedHeader}.${encodedPayload}`;
+
+  const key: CryptoKey = await createSigningKey(secret);
+  const encoder: TextEncoder = new TextEncoder();
+  const signature: ArrayBuffer = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(signingInput)
+  );
+
+  const encodedSignature: string = base64urlEncode(new Uint8Array(signature));
+  return `${signingInput}.${encodedSignature}`;
+};
