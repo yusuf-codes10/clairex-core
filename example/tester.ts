@@ -10,7 +10,7 @@ export class tester extends ClaireMiddleware {
     // } else {
     //     return c.response.json({msg: 'Not a POST request!'});
     // }
-    const token = c.request.headers.authorization;
+    const token = c.request.headers.get('authorization');
     if (!token) {
       return new ClaireException(404, 'Not Found, there is no token here ').toResponse();
     }

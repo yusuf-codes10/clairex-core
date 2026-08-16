@@ -8,7 +8,7 @@ import { ClaireContext } from "./context";
  * @example
  * class AuthGuard extends ClaireMiddleware {
  *     override before(c: ClaireContext) {
- *         if (!c.request.headers.authorization) {
+ *         if (!c.request.headers.get('authorization')) {
  *             return c.response.json({ error: 'Unauthorized' }, 401);
  *         }
  *     }

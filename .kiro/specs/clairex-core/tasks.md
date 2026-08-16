@@ -361,7 +361,7 @@ app.mount(new UserController());
 ```typescript
 class AuthGuard extends ClaireMiddleware {
     override before(c: ClaireContext) {
-        const token = c.request.headers.authorization;
+        const token = c.request.headers.get('authorization');
         if (!token) {
             return c.response.json({ msg: 'Unauthorized' }, 401);
         }
