@@ -901,6 +901,126 @@ Three methods. That's it. Everything else is done through ClaireKey.
 
 ---
 
+### Task 29: Edge Case — Validator Level Guard ✅
+**Commits:** `6ccdbe8`, `fb8f621`, `6391c80`, `75a7144`
+
+**What was done:**
+- ClaireValidator can ONLY be used at the route level — framework enforces this at startup
+- `ClaireX.use()` checks `instanceof ClaireValidator` → throws ClaireException if detected
+- `ClaireKey` constructor loops through key-level middlewares → throws ClaireException if a validator is found
+- Server refuses to start if validator is misplaced — loud, clear error at startup
+
+**Why this guard exists:**
+- Validators call `c.request.json()` — GET requests have no body → crash
+- Different routes expect different body shapes — a key-level validator can't know which route is being hit
+- Validators at key level break other routes: "Body already used" error when multiple validators try to read the stream
+- The framework must prevent misuse, not let users figure it out at runtime
+
+**Edge case discovered through testing:**
+```typescript
+// This SHOULD NOT work — and now it doesn't:
+super('/users', [new logger(), new updateUserValidator()]); // ❌ throws at startup
+
+// This is the ONLY correct usage:
+this.routes('post', '/', this.createUser, [new userValidator()]); // ✅ route level
+```
+
+---
+
+### Task 30: Edge Case — Missing Validator Guard ✅
+**Commits:** `6519dc5`, `34059e2`, `eda05a2`, `353b7e7`
+
+**What was done:**
+- If `c.valid<T>()` is called without a ClaireValidator middleware on the route, it now throws instead of silently returning `{}`
+- ClaireContext checks if `_valid` is empty/default before returning — throws ClaireException(500) with a clear message
+- Prevents silent failures where handler receives empty object instead of validated data
+
+**The problem it solves:**
+```typescript
+// User forgets to attach validator:
+this.routes('post', '/', this.createUser);  // no validator!
+
+// Handler calls c.valid<User>() — previously returned {} silently
+// Now throws: "No validated body found. Did you forget to attach a ClaireValidator?"
+```
+
+**Framework philosophy:** ClaireX does not fail silently. If you call `c.valid<T>()`, you MUST have validated. Otherwise the framework tells you immediately.
+
+---
+
+## Remaining Tasks
+
+---
+
+### Task 31: Pre-built Exceptions — Subclasses
+**Relates to:** Task 21  
+**Dependencies:** Task 21 (base ClaireException)
+
+**What to do:**
+- Create `/src/exceptions/` folder
+- Implement convenience subclasses: `NotFoundException` (404), `ValidationException` (400), `UnauthorizedException` (401), `InternalException` (500)
+- Each subclass provides its own default hint for `logClaireException()`
+
+**Done when:** Users can `throw new NotFoundException('User not found')` without remembering status codes.
+
+---
+
+### Task 32: Pre-built Middlewares — CORS & JWT
+**Relates to:** Task 18  
+**Dependencies:** Task 18 (ClaireMiddleware base)
+
+**What to do:**
+- `ClaireCors` — handles CORS headers + OPTIONS preflight
+- `ClaireJWT` — verifies Bearer token, stores decoded payload on context
+
+**Done when:** Framework ships with production-ready middlewares out of the box.
+
+---
+
+### Task 33: Typed Handler Enforcement / ClaireHandler as Class
+**Relates to:** US-6 (Typed Handler Signatures)  
+**Dependencies:** Task 24 (validator)
+
+**What to do:**
+- Consider evolving `ClaireHandler` from a type alias to a class
+- Could enable typed handler signatures that connect to validator output
+- May integrate with the .claire extension for compile-time enforcement
+
+**Done when:** Decision made and implemented — either class-based handlers or remains as type alias with .claire enforcement.
+
+---
+
+### Task 34: Bun.plugin — .claire File Extension (Experimental)
+**Relates to:** ClaireX differentiator  
+**Dependencies:** Task 24, Task 33
+
+**What to do:**
+- Implement custom Bun.plugin that registers `.claire` file loader
+- Compile-time enforcement of ClaireX rules:
+  - `c.valid<T>()` without validator on route → compile error
+  - Validator at wrong level → compile error
+  - Handler missing explicit return type → compile error
+  - Untyped params access → compile error
+- Moves runtime guardrails (Task 29, 30) to compile time
+
+**Done when:** A `.claire` file rejects invalid code before it even runs. Editor shows errors inline.
+
+---
+
+### Task 35: Documentation & Hackathon Submission
+**Relates to:** Hackathon requirements  
+**Dependencies:** All previous tasks
+
+**What to do:**
+- Write comprehensive README.md
+- Nuxt Content docs site (clairex-docs repo)
+- Ensure `.kiro/specs/` is committed and up-to-date
+- Demo video showing ClaireX in action + Kiro spec-driven process
+
+**Done when:** A judge can clone, install, run, and understand the project from the README alone.
+
+---
+
 ## Summary
 
 | # | Task | Status |
@@ -933,8 +1053,10 @@ Three methods. That's it. Everything else is done through ClaireKey.
 | 26 | ClaireValidator — Integration & Testing | ✅ Done |
 | 27 | Naming Refactor — ClaireCell & Methods | ✅ Done |
 | 28 | ClaireKey Rebrand & Composition Refactor | ✅ Done |
-| 29 | Pre-built Exceptions | ⬜ Next |
-| 30 | Pre-built Middlewares | ⬜ Pending |
-| 31 | Typed Handler Enforcement | ⬜ Pending |
-| 32 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 33 | Documentation & Submission | ⬜ Final |
+| 29 | Edge Case — Validator Level Guard | ✅ Done |
+| 30 | Edge Case — Missing Validator Guard | ✅ Done |
+| 31 | Pre-built Exceptions | ⬜ Next |
+| 32 | Pre-built Middlewares | ⬜ Pending |
+| 33 | Typed Handler Enforcement | ⬜ Pending |
+| 34 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 35 | Documentation & Submission | ⬜ Final |
