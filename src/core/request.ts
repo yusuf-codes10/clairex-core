@@ -85,15 +85,22 @@ export class ClaireRequest {
   // }
 
   /**
-   * Returns all request headers as a single-value object.
+   * Provides access to request headers via helper methods.
+   * Uses the native Headers API — keys are case-insensitive.
    *
-   * @returns The headers as key-value pairs.
+   * @returns An object with get(), has(), and all() methods.
    *
    * @example
-   * const token = c.request.headers.authorization;
-   * const contentType = c.request.headers['content-type'];
+   * const token = c.request.headers.get('authorization');
+   * const hasAuth = c.request.headers.has('authorization');
+   * const allHeaders = c.request.headers.all();
    */
-  get headers(): Record<string, string> {
-    return Object.fromEntries(this.raw.headers);
+  get headers() {
+    // return Object.fromEntries(this.raw.headers);
+    return {
+      get: (key: string) => this.raw.headers.get(key),
+      has: (key: string) => this.raw.headers.has(key),
+      all: () => Object.fromEntries(this.raw.headers),
+    };
   }
 }
