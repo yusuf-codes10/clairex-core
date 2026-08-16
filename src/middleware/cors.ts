@@ -22,6 +22,7 @@ export class ClaireCors extends ClaireMiddleware {
 
   override before(c: ClaireContext) {
     // returning options | short circuit
+    // TODO: might need to return an actual Response later
     if (c.request.method === "OPTIONS") {
       return new Response(null, {
         status: 204,
