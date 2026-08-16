@@ -44,13 +44,31 @@ export class ClaireContext {
     return this._valid as T;
   }
 
+  /**
+   * Returns the authenticated user's token payload as a typed object.
+   * Must be used after a ClaireJWT middleware has run on the route.
+   *
+   * @template T - The expected type of the decoded token payload.
+   * @returns The decoded auth payload cast to type T.
+   *
+   * @example
+   * type TokenPayload = { userId: number, role: string };
+   * const user = c.auth<TokenPayload>();
+   */
   auth<T>(): T {
-    if(!this._auth) {
-      throw new ClaireException(500, 'No auth payload found. Did you forget to attach a ClaireJWT middleware?');
+    if (!this._auth) {
+      throw new ClaireException(
+        500,
+        "No auth payload found. Did you forget to attach a ClaireJWT middleware?",
+      );
     }
     return this._auth as T;
   }
 
+  /**
+   * @internal
+   * Sets the authenticated payload. Called by ClaireJWT middleware.
+   */
   set setAuth(data: Record<string, unknown>) {
     this._auth = data;
   }
