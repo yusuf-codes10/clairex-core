@@ -102,3 +102,9 @@ export const colorMethod = (method: string): string => {
   const color: string = colors[method] ?? "\x1b[37m";
   return `${bold}${color}${method}${reset}`;
 };
+
+
+// JWT verifyToken utility
+export const verifyToken = () => {
+  
+}

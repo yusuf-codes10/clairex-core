@@ -15,5 +15,10 @@ export class ClaireJWT extends ClaireMiddleware {
         const token = authHeader.split(' ')[1];
 
         // 3. Verify token
+        try {
+            // const payload = 
+        } catch {
+            return new ClaireException(401, 'Invalid or Expired token').toResponse();
+        }
     }
 }
