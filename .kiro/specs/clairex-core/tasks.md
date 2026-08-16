@@ -851,7 +851,141 @@ this.routes('post', '/', this.createUser);  // no validator!
 
 ---
 
-### Task 31: Pre-built Exceptions — Subclasses
+### Task 31: ClaireCors — CORS Middleware ✅
+**Commits:** `52f96ea`, `e9a7496`, `02afd14`, `2026ab2`, `db583bd`
+
+**What was done:**
+- Implemented `ClaireCors` middleware in `/src/middleware/cors.ts`
+- Constructor accepts: `origin`, `allowedHeaders[]`, `allowedMethods[]`, `exposeHeaders[]`
+- `before()`: if method is `OPTIONS` (preflight) → returns `204` Response with all CORS headers (short-circuit)
+- `after()`: adds CORS headers to every actual response so the browser allows it through
+- Handles the browser's automatic preflight check without the user writing OPTIONS routes
+
+**Design decisions:**
+- CORS is a global middleware concern — `app.use(new ClaireCors(...))`
+- `OPTIONS` is not a user-facing HTTP method — it's browser plumbing, handled by middleware
+- No `options()` method on ClaireRouter — middleware handles it
+- Configurable per-instance: different origins, headers, methods per deployment
+
+---
+
+### Task 32: ClaireJWT — JWT Authentication Middleware ✅
+**Commits:** `b33eb38`, `51b5d87`, `58404cf`, `43147db`, `e63a02f`, `7cb57ac`, `bb0555a`, `d46cf5d`, `6e23c8d`, `c57e737`
+
+**What was done:**
+- Implemented `ClaireJWT` middleware in `/src/middleware/jwt.ts`
+- Constructor accepts `secret: string` — the HMAC-SHA256 signing key
+- `before()` flow: check header exists → extract Bearer token → verify with `ClaireUtil.verifyToken()` → store payload on context
+- On failure: returns `ClaireException(401)` response (short-circuit)
+- On success: stores decoded payload via `c.setAuth = payload`
+- Handler accesses payload: `c.auth<TokenPayload>()`
+
+**JWT utilities (zero external dependencies):**
+- `signToken(payload, secret, expiresInSeconds?)` — creates JWT with HMAC-SHA256 via `crypto.subtle`
+- `verifyToken(token, secret)` — verifies signature + checks expiration
+- Internal helpers: `base64urlEncode`, `base64urlDecode`, `createSigningKey`
+- All built on Bun's native `crypto.subtle` — no jose, no jsonwebtoken
+
+**Usage:**
+```typescript
+// Protect routes:
+super('/users', [new ClaireJWT(process.env.JWT_SECRET)]);
+
+// Access decoded payload in handler:
+const user = c.auth<{ userId: number, role: string }>();
+
+// Create tokens in login handler:
+const token = await ClaireUtil.signToken({ userId: 1, role: 'admin' }, SECRET);
+return c.response.json({ token });
+```
+
+---
+
+### Task 33: ClaireContext — Auth Payload Storage ✅
+**Commits:** `cd60a70`, `1978ee5`, `e051d1f`, `1082304`
+
+**What was done:**
+- Added `private _auth: Record<string, unknown> | null = null` field on ClaireContext
+- Added setter: `set setAuth(data: Record<string, unknown>)` — ClaireJWT middleware stores decoded payload
+- Added generic method: `auth<T>(): T` — handler reads typed auth payload
+- Guard: if `_auth` is null → throws ClaireException(500, "No auth payload found. Did you forget to attach a ClaireJWT middleware?")
+- Same pattern as `c.valid<T>()` — middleware writes, handler reads, guard if missing
+
+---
+
+### Task 34: ClaireUtil — Static Utility Class ✅
+**Commits:** `f6c0fef`, `cbeafce`, `34fbf5a`
+
+**What was done:**
+- Created `/src/utils/util.ts` — user-facing static utility class
+- `ClaireUtil` is `abstract` — cannot be instantiated, only static method access
+- Moved `signToken` and `verifyToken` from internal utils to `ClaireUtil`
+- Internal helpers (`base64urlEncode`, `base64urlDecode`, `createSigningKey`, `matchRoute`, `clairexBanner`, `logClaireException`, `colorMethod`) remain in `src/core/utils.ts`
+
+**Separation of utilities:**
+- `/src/core/utils.ts` — **internal** (framework uses these, user doesn't touch them)
+- `/src/utils/util.ts` — **public** (`ClaireUtil` static class, exported to user)
+
+**User access:**
+```typescript
+import { ClaireUtil } from '@clairex/core';
+
+const token = await ClaireUtil.signToken({ userId: 1 }, 'secret');
+const payload = await ClaireUtil.verifyToken(token, 'secret');
+```
+
+---
+
+### Task 35: ClaireRequest — Headers Helper API ✅
+**Commits:** `5ef8e47`, `518a4f5`
+
+**What was done:**
+- Replaced plain `Record<string, string>` headers with helper object
+- `c.request.headers.get(key)` — case-insensitive, lazy access via native Headers API
+- `c.request.headers.has(key)` — boolean check
+- `c.request.headers.all()` — returns full `Record<string, string>` when needed
+- Updated all usages across codebase (tester.ts, middleware.ts JSDoc, tasks.md examples)
+
+**Why the change:**
+- Native Headers API is case-insensitive (`Authorization` vs `authorization` both work)
+- Lazy access — only reads what you ask for, not all headers every time
+- More methods available (`has()` for boolean checks)
+
+---
+
+### Task 36: npm Publish — @clairex/core ✅
+**Commits:** `fe5080c`, `fd5d00c`, `aaf1002`, `4d5d833`, `32f67b3`
+
+**What was done:**
+- Created `tsconfig.build.json` — separate config for generating `.d.ts` declarations (overrides `noEmit`)
+- Build script: `bun build ./src/index.ts --outdir ./dist --target bun && bunx tsc -p tsconfig.build.json`
+- Updated barrel export (`src/index.ts`) — exports all core classes, middlewares, utils, and types
+- Published to npm as `@clairex/core@0.1.0`
+- Package includes: bundled JS (19.1 KB) + full TypeScript declarations
+- Scoped under `@clairex` org — leaves room for `@clairex/orm`, `@clairex/cli` in the future
+
+**Installation:**
+```bash
+bun add @clairex/core
+```
+
+**Package structure:**
+```
+dist/
+├── index.js        — bundled code (19.1 KB)
+├── index.d.ts      — barrel type declarations
+├── core/           — .d.ts for all core classes
+├── middleware/     — .d.ts for built-in middlewares
+└── utils/          — .d.ts for ClaireUtil
+```
+
+---
+
+## Remaining Tasks
+
+---
+
+### Task 37: Pre-built Exceptions — Subclasses
 **Relates to:** Task 21  
 **Dependencies:** Task 21 (base ClaireException)
 
@@ -864,19 +998,7 @@ this.routes('post', '/', this.createUser);  // no validator!
 
 ---
 
-### Task 32: Pre-built Middlewares — CORS & JWT
-**Relates to:** Task 18  
-**Dependencies:** Task 18 (ClaireMiddleware base)
-
-**What to do:**
-- `ClaireCors` — handles CORS headers + OPTIONS preflight
-- `ClaireJWT` — verifies Bearer token, stores decoded payload on context
-
-**Done when:** Framework ships with production-ready middlewares out of the box.
-
----
-
-### Task 33: Typed Handler Enforcement / ClaireHandler as Class
+### Task 38: Typed Handler Enforcement / ClaireHandler as Class
 **Relates to:** US-6 (Typed Handler Signatures)  
 **Dependencies:** Task 24 (validator)
 
@@ -889,9 +1011,9 @@ this.routes('post', '/', this.createUser);  // no validator!
 
 ---
 
-### Task 34: Bun.plugin — .claire File Extension (Experimental)
+### Task 39: Bun.plugin — .claire File Extension (Experimental)
 **Relates to:** ClaireX differentiator  
-**Dependencies:** Task 24, Task 33
+**Dependencies:** Task 24, Task 38
 
 **What to do:**
 - Implement custom Bun.plugin that registers `.claire` file loader
@@ -906,7 +1028,7 @@ this.routes('post', '/', this.createUser);  // no validator!
 
 ---
 
-### Task 35: Documentation & Hackathon Submission
+### Task 40: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -954,8 +1076,12 @@ this.routes('post', '/', this.createUser);  // no validator!
 | 28 | ClaireKey Rebrand & Composition Refactor | ✅ Done |
 | 29 | Edge Case — Validator Level Guard | ✅ Done |
 | 30 | Edge Case — Missing Validator Guard | ✅ Done |
-| 31 | Pre-built Exceptions | ⬜ Next |
-| 32 | Pre-built Middlewares | ⬜ Pending |
-| 33 | Typed Handler Enforcement | ⬜ Pending |
-| 34 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 35 | Documentation & Submission | ⬜ Final |
+| 31 | ClaireCors — CORS Middleware | ✅ Done |
+| 32 | ClaireJWT — JWT Authentication Middleware | ✅ Done |
+| 33 | ClaireContext — Auth Payload Storage | ✅ Done |
+| 34 | ClaireUtil — Static Utility Class | ✅ Done |
+| 35 | ClaireRequest — Headers Helper API | ✅ Done |
+| 36 | npm Publish — @clairex/core | ✅ Done |
+| 37 | Typed Handler Enforcement | ⬜ Pending |
+| 38 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 39 | Documentation & Submission | ⬜ Final |
