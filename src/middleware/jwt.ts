@@ -1,7 +1,7 @@
 import type { ClaireContext } from "../core/context";
 import { ClaireException } from "../core/exception";
 import { ClaireMiddleware } from "../core/middleware";
-import { verifyToken } from "../core/utils";
+import { ClaireUtil } from "../utils/util";
 
 /**
  * Built-in JWT authentication middleware.
@@ -45,7 +45,7 @@ export class ClaireJWT extends ClaireMiddleware {
 
     // 3. Verify token
     try {
-      const payload = await verifyToken(token, this._secret);
+      const payload = await ClaireUtil.verifyToken(token, this._secret);
       c.setAuth = payload;
     } catch {
       return new ClaireException(401, "Invalid or Expired token").toResponse();
