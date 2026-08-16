@@ -1,9 +1,11 @@
 {
-  "name": "clairex-core",
+  "name": "@clairex/core",
+  "description": "A class-based, explicitly-typed web framework for Bun. OOP-first, built-in validation, zero external dependencie",
   "module": "index.ts",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "version": "0.1.0",
   "files": [
     "dist"
   ],
