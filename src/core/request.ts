@@ -96,7 +96,6 @@ export class ClaireRequest {
    * const allHeaders = c.request.headers.all();
    */
   get headers() {
-    // return Object.fromEntries(this.raw.headers);
     return {
       get: (key: string) => this.raw.headers.get(key),
       has: (key: string) => this.raw.headers.has(key),
@@ -104,6 +103,16 @@ export class ClaireRequest {
     };
   }
 
+  /**
+ * Returns the matched route parameters as key-value pairs.
+ * Values are extracted from dynamic `:param` segments in the route pattern.
+ *
+ * @returns The route parameters.
+ *
+ * @example
+ * // Route: /users/:id → Request: /users/123
+ * const { id } = c.request.params; // "123"
+ */
   get params(): Record<string, string> {
     return this._params;
   }

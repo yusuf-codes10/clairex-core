@@ -91,8 +91,6 @@ export class ClaireX {
 
       fetch: async (req: Request) => {
         try {
-          // const context = new ClaireContext(req);
-
           for (const route of this._router.routes) {
              const url = new URL(req.url);
 
@@ -104,15 +102,12 @@ export class ClaireX {
 
                         // Context created AFTER matching — params passed at birth
             const context = new ClaireContext(req, params);
-            // TODO: we might solve this with ClaireNiddleware or something
-            // context.request.params = params;
-
             // check and loop throught the middleware
             // 1. the before loop
             for (const middleware of this._middlewareChain) {
               const early = await middleware.before(context);
               // check if that before returns a Response or not
-              // TODO: might have an option to call after() in a short cicuit
+
               if (early instanceof Response) return early;
             }
 
