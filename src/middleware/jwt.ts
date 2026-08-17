@@ -32,7 +32,7 @@ export class ClaireJWT extends ClaireMiddleware {
     this._secret = secret;
   }
 
-  override async before(c: ClaireContext) {
+  override async before(c: ClaireContext): Promise<void | Response> {
     const authHeader = c.request.headers.get("authorization");
 
     // 1. Check if the header exists

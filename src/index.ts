@@ -12,7 +12,7 @@ export { ClaireResponse } from './core/response';
 export { ClaireUtil } from './utils/util';
 
 // Middleware
-export { ClaireLogger } from './middleware/ClaireLogger';
+export { ClaireLogger } from './middleware/logger';
 export { ClaireCors } from './middleware/cors';
 export { ClaireJWT } from './middleware/jwt';
 

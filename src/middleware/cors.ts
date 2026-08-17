@@ -20,7 +20,7 @@ export class ClaireCors extends ClaireMiddleware {
     this._exposeHeaders = exposeHeaders;
   }
 
-  override before(c: ClaireContext) {
+  override before(c: ClaireContext): void | Response {
     // returning options | short circuit
     // TODO: might need to return an actual Response later
     if (c.request.method === "OPTIONS") {

@@ -3,7 +3,7 @@ import { ClaireContext } from "./context";
 import { clairexBanner, matchRoute } from "./utils";
 import { ClaireMiddleware } from "./middleware";
 import { ClaireException } from "./exception";
-import { ClaireLogger } from "../middleware/ClaireLogger";
+import { ClaireLogger } from "../middleware/logger";
 import { ClaireKey } from "./key";
 import { ClaireValidator } from "./validator";
 
