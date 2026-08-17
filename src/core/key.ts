@@ -22,7 +22,7 @@ import { ClaireException } from "./exception";
  */
 export abstract class ClaireKey {
   protected _router = new ClaireRouter();
-  protected prefix: string;
+  protected _prefix: string;
 
   // each Key has its own middleware chain
   private _middlewareChain?: ClaireMiddleware[] = [];
@@ -34,7 +34,7 @@ export abstract class ClaireKey {
           }
     }
     this._middlewareChain = middlewares;
-    this.prefix = prefix;
+    this._prefix = prefix;
     this.register(); // have to call the register method after we have the prefix
   }
 
@@ -71,7 +71,7 @@ export abstract class ClaireKey {
   ): void {
     this._router.routes.push({
       method: method.toUpperCase(),
-      pattern: `${this.prefix}${path}`,
+      pattern: `${this._prefix}${path}`,
       handler: handler.bind(this),
       routeMiddlewares: middleware,
     });
