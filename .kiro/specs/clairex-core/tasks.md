@@ -419,8 +419,8 @@ These are known architectural issues that need solving in upcoming tasks.
 ### Problem 1: ClaireValidator — Body Typing (`unknown`) ✅ SOLVED
 ~~`c.request.json()` returns `Promise<unknown>`.~~ ClaireValidator validates at runtime, stores proven data on context. `c.body<T>()` delivers typed data backed by runtime validation. No external deps — ClaireX IS the validation layer.
 
-### Problem 2: Params Encapsulation
-`context.request.params = params` is assigned publicly in ClaireX's fetch handler after context creation. Breaks backing field pattern. Needs to be sealed — either via constructor refactor or middleware-level internal access.
+### Problem 2: Params Encapsulation ✅ SOLVED
+~~`context.request.params = params` is assigned publicly.~~ Context is now created after route matching with params passed at construction. `_params` is private with getter only — fully sealed.
 
 ### Problem 3: Scoped Middleware ✅ SOLVED
 ~~All middlewares registered via `app.use()` are global.~~ ClaireX now supports three levels of middleware: global (`app.use()`), controller-level (passed to constructor), and route-level (4th param in `this.routes()`). Execution follows onion model at all three layers.
@@ -985,20 +985,46 @@ dist/
 
 ---
 
-### Task 37: Pre-built Exceptions — Subclasses
-**Relates to:** Task 21  
-**Dependencies:** Task 21 (base ClaireException)
+### Task 37: Params Encapsulation — SOLVED ✅
+**Commits:** `abe8c26`, `d934959`, `d8910cb`
 
-**What to do:**
-- Create `/src/exceptions/` folder
-- Implement convenience subclasses: `NotFoundException` (404), `ValidationException` (400), `UnauthorizedException` (401), `InternalException` (500)
-- Each subclass provides its own default hint for `logClaireException()`
+**What was done:**
+- ClaireContext now created AFTER route matching — params passed at construction time
+- `ClaireContext` constructor accepts `params: Record<string, string> = {}` — forwards to ClaireRequest
+- `ClaireRequest._params` is fully private with getter only — no public setter, no external mutation
+- Removed `context.request.params = params` assignment from fetch handler
+- Route matching now uses native `req.method` and `new URL(req.url).pathname` directly — no ClaireContext needed for matching
+- Bonus: no wasted object creation for non-matching routes (context only created on match)
 
-**Done when:** Users can `throw new NotFoundException('User not found')` without remembering status codes.
+**The last original problem — SOLVED:**
+- Before: context created before matching → params assigned publicly after → encapsulation broken
+- After: context created after matching → params passed at birth → sealed, immutable, private
+
+**All 4 original problems now resolved:**
+1. ~~ClaireValidator (unknown body)~~ ✅ Task 24-26
+2. ~~Params encapsulation (public setter)~~ ✅ Task 37
+3. ~~Scoped middleware (global only)~~ ✅ Task 22
+4. ~~Global error handling (no catch)~~ ✅ Task 21
 
 ---
 
-### Task 38: Typed Handler Enforcement / ClaireHandler as Class
+### Task 38: Sub-Exceptions — Scratched ✅
+**Commits:** `c98adaa`, `446ce1a`
+
+**What was done:**
+- Experimented with `NotFoundException extends ClaireException` — decided against it
+- Scratched the idea: `throw new ClaireException(404, 'Not found')` is more explicit and ClaireX-style
+- Status codes are universal — developers know them. Adding class names adds cognitive load for no benefit
+- Hints will be added to `toResponse()` based on status code automatically (future enhancement)
+
+**Design decision:**
+- One exception class, explicit status codes. No subclass proliferation.
+- `ClaireException` is enough. The user declares the code and message. ClaireX can auto-hint based on code.
+- Sub-exceptions may still be used internally by the framework — but not as a user API.
+
+---
+
+### Task 39: Typed Handler Enforcement / ClaireHandler as Class
 **Relates to:** US-6 (Typed Handler Signatures)  
 **Dependencies:** Task 24 (validator)
 
@@ -1011,9 +1037,9 @@ dist/
 
 ---
 
-### Task 39: Bun.plugin — .claire File Extension (Experimental)
+### Task 40: Bun.plugin — .claire File Extension (Experimental)
 **Relates to:** ClaireX differentiator  
-**Dependencies:** Task 24, Task 38
+**Dependencies:** Task 24, Task 39
 
 **What to do:**
 - Implement custom Bun.plugin that registers `.claire` file loader
@@ -1028,7 +1054,20 @@ dist/
 
 ---
 
-### Task 40: Documentation & Hackathon Submission
+### Task 41: CLI Scaffolding — create-clairex
+**Relates to:** DX, hackathon impact
+
+**What to do:**
+- Create `create-clairex` npm package
+- Template project with: keys/, validators/, middlewares/, app.ts, tsconfig, package.json
+- `bun create clairex my-app` scaffolds a working ClaireX project
+- Auto-installs `@clairex/core`
+
+**Done when:** Judges can `bun create clairex my-app` and have a working project immediately.
+
+---
+
+### Task 42: Documentation & Hackathon Submission
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -1082,6 +1121,9 @@ dist/
 | 34 | ClaireUtil — Static Utility Class | ✅ Done |
 | 35 | ClaireRequest — Headers Helper API | ✅ Done |
 | 36 | npm Publish — @clairex/core | ✅ Done |
-| 37 | Typed Handler Enforcement | ⬜ Pending |
-| 38 | Bun.plugin — .claire Extension | ⬜ Experimental |
-| 39 | Documentation & Submission | ⬜ Final |
+| 37 | Params Encapsulation — Solved | ✅ Done |
+| 38 | Sub-Exceptions — Scratched | ✅ Done |
+| 39 | Typed Handler Enforcement | ⬜ Pending |
+| 40 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 41 | CLI Scaffolding — create-clairex | ⬜ Pending |
+| 42 | Documentation & Submission | ⬜ Final |
