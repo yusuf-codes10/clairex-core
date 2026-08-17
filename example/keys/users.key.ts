@@ -22,14 +22,14 @@ const users: User[] = [
 export class userKey extends ClaireKey {
 
     constructor () {
-        super('/users', [new logger(), new middle(), new updateUserValidator()]);
+        super('/users', [new logger(), new middle()]);
     }
 
     register () {
         this.routes('get', '/', this.getUsers);
         this.routes('post', '/', this.createUser, [new inner(), new userValidator()]);
         this.routes('get', '/:id', this.getUserById);
-        this.routes('patch', '/:id', this.updateUserName);
+        this.routes('patch', '/:id', this.updateUserName, [new updateUserValidator()]);
     }
 
     private getUsers (c: ClaireContext) {
