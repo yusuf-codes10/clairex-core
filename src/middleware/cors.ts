@@ -3,7 +3,7 @@ import { ClaireMiddleware } from "../core/middleware";
 
 export class ClaireCors extends ClaireMiddleware {
   private _origin: string;
-  private _alloweHeaders: string[];
+  private _allowedHeaders: string[];
   private _allowedMethods: string[];
   private _exposeHeaders: string[];
 
@@ -15,7 +15,7 @@ export class ClaireCors extends ClaireMiddleware {
   ) {
     super();
     this._origin = origin;
-    this._alloweHeaders = allowedHeaders;
+    this._allowedHeaders = allowedHeaders;
     this._allowedMethods = allowedMethods;
     this._exposeHeaders = exposeHeaders;
   }
@@ -29,7 +29,7 @@ export class ClaireCors extends ClaireMiddleware {
         headers: {
           "Access-Control-Allow-Origin": this._origin,
           "Access-Control-Allow-Methods": this._allowedMethods.join(", "),
-          "Access-Control-Allow-Headers": this._alloweHeaders.join(", "),
+          "Access-Control-Allow-Headers": this._allowedHeaders.join(", "),
           "Access-Control-Expose-Headers": this._exposeHeaders.join(", "),
         },
       });
@@ -45,7 +45,7 @@ export class ClaireCors extends ClaireMiddleware {
     );
     response.headers.set(
       "Access-Control-Allow-Headers",
-      this._alloweHeaders.join(", "),
+      this._allowedHeaders.join(", "),
     );
     response.headers.set(
       "Access-Control-Expose-Headers",
