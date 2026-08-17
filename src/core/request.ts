@@ -80,10 +80,6 @@ export class ClaireRequest {
     return this._method;
   }
 
-  // get params (): Record <string, string> {
-  //   return this._params;
-  // }
-
   /**
    * Provides access to request headers via helper methods.
    * Uses the native Headers API — keys are case-insensitive.

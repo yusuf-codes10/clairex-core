@@ -6,7 +6,7 @@ import { ClaireException } from "./exception";
 
 /**
  * Abstract base class for defining a self-contained unit of routes, handlers, and middleware.
- * Extend this class to create a cell for each resource in your API.
+ * Extend this class to create a key for each resource in your API.
  *
  * @example
  * export class UserKey extends ClaireKey {
@@ -24,7 +24,7 @@ export abstract class ClaireKey {
   protected _router = new ClaireRouter();
   protected prefix: string;
 
-  // each Cell has its own middleware chain
+  // each Key has its own middleware chain
   private _middlewareChain?: ClaireMiddleware[] = [];
 
   constructor(prefix: string, middlewares: ClaireMiddleware[] = []) {
@@ -52,10 +52,10 @@ export abstract class ClaireKey {
   protected abstract register(): void;
 
   /**
-   * Registers a route on this cell with an optional array of route-level middlewares.
+   * Registers a route on this key with an optional array of route-level middlewares.
    *
    * @param method - The HTTP method (get, post, put, patch, delete).
-   * @param path - The route path, appended to the cell's prefix.
+   * @param path - The route path, appended to the key's prefix.
    * @param handler - The handler method for this route.
    * @param middleware - Optional array of middlewares scoped to this route only.
    *
