@@ -50,7 +50,10 @@ export class ClaireX {
    */
   use(middleware: ClaireMiddleware): this {
     if (middleware instanceof ClaireValidator) {
-      throw new ClaireException(500, 'Validators must be used on the route level!').toResponse();
+      throw new ClaireException(
+        500,
+        "Validators must be used on the route level!",
+      ).toResponse();
     }
     this._middlewareChain.push(middleware);
     return this;
@@ -88,15 +91,19 @@ export class ClaireX {
 
       fetch: async (req: Request) => {
         try {
-          const context = new ClaireContext(req);
+          // const context = new ClaireContext(req);
 
           for (const route of this._router.routes) {
-            if (route.method !== context.request.method) continue; //skip to next iteration
+             const url = new URL(req.url);
 
-            const params = matchRoute(route.pattern, context.request.pathname);
+            if (route.method !== req.method) continue; //skip to next iteration
+
+            const params = matchRoute(route.pattern, url.pathname);
 
             if (params === null) continue;
 
+                        // Context created AFTER matching — params passed at birth
+            const context = new ClaireContext(req, params);
             // TODO: we might solve this with ClaireNiddleware or something
             context.request.params = params;
 
