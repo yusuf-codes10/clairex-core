@@ -1,4 +1,5 @@
 import { plugin } from "bun"; // only thing you need
+import { transform } from "../core/utils";
 
 plugin({
   name: "my-plugin",

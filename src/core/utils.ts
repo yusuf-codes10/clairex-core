@@ -142,3 +142,7 @@ export const createSigningKey = async (secret: string): Promise<CryptoKey> => {
     ['sign', 'verify']
   );
 };
+
+export const transform = (content: string) => {
+
+}
