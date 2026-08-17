@@ -7,9 +7,10 @@ plugin({
       const contents = await Bun.file(path).text();
 
     //   validate ClaireX rules | throws if validated
+    validate(contents, path);
 
       return {
-        contents: transform(contents),
+        contents: contents,
         loader: "js",
       };
     });
