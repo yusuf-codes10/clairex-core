@@ -10,8 +10,8 @@ export class ClaireContext {
   private _valid: unknown = {};
   private _auth: Record<string, unknown> | null = null;
 
-  constructor(req: Request) {
-    this.request = new ClaireRequest(req);
+  constructor(req: Request, params: Record<string, string> = {}) {
+    this.request = new ClaireRequest(req, params);
     this.response = new ClaireResponse();
   }
 
