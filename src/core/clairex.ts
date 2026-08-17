@@ -105,7 +105,7 @@ export class ClaireX {
                         // Context created AFTER matching — params passed at birth
             const context = new ClaireContext(req, params);
             // TODO: we might solve this with ClaireNiddleware or something
-            context.request.params = params;
+            // context.request.params = params;
 
             // check and loop throught the middleware
             // 1. the before loop
