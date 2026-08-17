@@ -10,7 +10,7 @@ export type RouterEntry = {
     method: string,
     pattern: string,
     handler: ClaireHandler,
-    middlewares?: ClaireMiddleware[], // controller level middleware
+    middlewares?: ClaireMiddleware[], // key level middleware
     routeMiddlewares?: ClaireMiddleware[] //route level middleware
 }
 

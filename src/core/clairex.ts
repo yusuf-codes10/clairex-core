@@ -19,7 +19,7 @@ import { ClaireValidator } from "./validator";
  * app.listen();
  */
 export class ClaireX {
-  private port;
+  private _port;
 
   private _middlewareChain: ClaireMiddleware[] = [];
 
@@ -34,7 +34,7 @@ export class ClaireX {
    * const app = new ClaireX(8080);
    */
   constructor(port?: number) {
-    this.port = port ?? 3000;
+    this._port = port ?? 3000;
     this._middlewareChain.push(new ClaireLogger());
   }
 
@@ -87,7 +87,7 @@ export class ClaireX {
    */
   listen(): void {
     Bun.serve({
-      port: this.port,
+      port: this._port,
 
       fetch: async (req: Request) => {
         try {
@@ -164,6 +164,6 @@ export class ClaireX {
       },
     });
 
-    clairexBanner(this.port);
+    clairexBanner(this._port);
   }
 }
