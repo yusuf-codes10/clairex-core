@@ -19,11 +19,11 @@ import { ClaireValidator } from "./validator";
  * app.listen();
  */
 export class ClaireX {
-  private _port;
+  private port;
 
-  private _middlewareChain: ClaireMiddleware[] = [];
+  private middlewareChain: ClaireMiddleware[] = [];
 
-  private _router = new ClaireRouter();
+  private router = new ClaireRouter();
 
   /**
    * Creates a new ClaireX application.
@@ -34,8 +34,8 @@ export class ClaireX {
    * const app = new ClaireX(8080);
    */
   constructor(port?: number) {
-    this._port = port ?? 3000;
-    this._middlewareChain.push(new ClaireLogger());
+    this.port = port ?? 3000;
+    this.middlewareChain.push(new ClaireLogger());
   }
 
   /**
@@ -55,7 +55,7 @@ export class ClaireX {
         "Validators must be used on the route level!",
       ).toResponse();
     }
-    this._middlewareChain.push(middleware);
+    this.middlewareChain.push(middleware);
     return this;
   }
 
@@ -74,7 +74,7 @@ export class ClaireX {
       ...route,
       middlewares: key.middlewares,
     }));
-    this._router.routes.push(...tagged);
+    this.router.routes.push(...tagged);
     return this;
   }
 
@@ -87,11 +87,11 @@ export class ClaireX {
    */
   listen(): void {
     Bun.serve({
-      port: this._port,
+      port: this.port,
 
       fetch: async (req: Request) => {
         try {
-          for (const route of this._router.routes) {
+          for (const route of this.router.routes) {
              const url = new URL(req.url);
 
             if (route.method !== req.method) continue; //skip to next iteration
@@ -104,7 +104,7 @@ export class ClaireX {
             const context = new ClaireContext(req, params);
             // check and loop throught the middleware
             // 1. the before loop
-            for (const middleware of this._middlewareChain) {
+            for (const middleware of this.middlewareChain) {
               const early = await middleware.before(context);
               // check if that before returns a Response or not
 
@@ -145,8 +145,8 @@ export class ClaireX {
             }
 
             // 5. the after loop (reverse)
-            for (let i = this._middlewareChain.length - 1; i >= 0; i--) {
-              await this._middlewareChain[i]?.after(context, response);
+            for (let i = this.middlewareChain.length - 1; i >= 0; i--) {
+              await this.middlewareChain[i]?.after(context, response);
             }
 
             return response;
@@ -164,6 +164,6 @@ export class ClaireX {
       },
     });
 
-    clairexBanner(this._port);
+    clairexBanner(this.port);
   }
 }
