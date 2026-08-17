@@ -1,4 +1,3 @@
-import { ClaireKey } from "./key";
 import type { RouterEntry, ClaireHandler } from "./types";
 
 export class ClaireRouter {

@@ -1,7 +1,7 @@
 // types
 
 import type { ClaireContext } from "./context";
-import { ClaireMiddleware } from "./middleware";
+import type { ClaireMiddleware } from "./middleware";
 
 // TODO: might switch the ClaireHandler into a class
 export type ClaireHandler = (c: ClaireContext) => Response | Promise<Response>;

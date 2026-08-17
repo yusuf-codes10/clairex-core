@@ -1,4 +1,4 @@
-import { logClaireException } from '../core/utils';
+import { logClaireException } from './utils';
 
 /**
  * Base exception class for ClaireX.

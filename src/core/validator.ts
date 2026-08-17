@@ -1,7 +1,7 @@
 import type { ClaireContext } from "./context";
 import { ClaireException } from "./exception";
 import { ClaireMiddleware } from "./middleware";
-import type { ValidationRule, ValidationSchema } from '../core/types';
+import type { ValidationRule, ValidationSchema } from './types';
 
 /**
  * Abstract base class for request body validation.
