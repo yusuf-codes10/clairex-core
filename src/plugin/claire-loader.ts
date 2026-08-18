@@ -1,4 +1,5 @@
 import { plugin } from "bun";
+import { logClaireException } from '../core/utils';
 
 plugin({
   name: "claire-loader",
@@ -37,9 +38,9 @@ export const validate = (content: string, filePath: string): void => {
     console.log("FAILING LINE:", line); // ← add this
     const afterParen = line.substring(line.lastIndexOf(")"));
     if (!afterParen.includes(":")) {
-      throw new Error(
-        `[ClaireX] ${filePath}: All methods must have explicit return types`,
-      );
+      logClaireException("ClairePlugin", 0, `Missing return type: ${filePath}`);
+      // throw new Error(`[ClaireX] .claire validation failed`);
+      process.exit(1);
     }
   }
 
