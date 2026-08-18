@@ -1037,20 +1037,71 @@ dist/
 
 ---
 
-### Task 40: Bun.plugin — .claire File Extension (Experimental)
-**Relates to:** ClaireX differentiator  
-**Dependencies:** Task 24, Task 39
+### Task 40: Bun.plugin — .claire File Extension (Experimental) ✅
+**Commits:** `28d01a9`, `626ab60`, `5129a51`, `51f5de6`, `a43b2a8`, `6d9bfc9`, `20b0090`, `22c090a`, `1bc93e3`, `75d00d0`, `cec778d`, `181a7bf`, `ad88640`, `c5786fe`, `80e1f03`, `0409798`
+**Branch:** `5-claire-extension`
+**Status:** Experimental — 2 rules working, 2 rules stubbed
 
-**What to do:**
-- Implement custom Bun.plugin that registers `.claire` file loader
-- Compile-time enforcement of ClaireX rules:
-  - `c.valid<T>()` without validator on route → compile error
-  - Validator at wrong level → compile error
-  - Handler missing explicit return type → compile error
-  - Untyped params access → compile error
-- Moves runtime guardrails (Task 29, 30) to compile time
+**What was done:**
+- Implemented `claire-loader` Bun.plugin in `src/plugin/claire-loader.ts`
+- Registered via `bunfig.toml` with `preload = ["@clairex/core/plugin"]` — intercepted before runtime
+- Plugin hooks into `build.onLoad` with `filter: /\.claire$/` — any `.claire` file is caught
+- On load: reads file text → validates against ClaireX rules → passes through with `loader: "ts"` if valid
+- Added `.vscode/settings.json`: `"files.associations": { "*.claire": "typescript" }` — VS Code treats `.claire` as TypeScript (syntax highlighting, IntelliSense)
+- Exported `validate()` function for potential reuse in testing/tooling
 
-**Done when:** A `.claire` file rejects invalid code before it even runs. Editor shows errors inline.
+**Rules implemented:**
+
+| Rule | What it checks | Status |
+|------|----------------|--------|
+| Rule 1: Export a class | `.claire` files must export a class (named or default). Regex: `/^\s*export\s+(default\s+)?class\s+\w+/m` | ✅ Working |
+| Rule 2: Explicit return types | Every method with an access modifier (`private`, `public`, `protected`, `override`) must declare a return type after `)`. Skips constructors. | ✅ Working |
+| Rule 3: Validator usage guard | `c.valid<T>()` used without a ClaireValidator on the route → reject | ⬜ Stubbed |
+| Rule 4: Explicit parameter types | All method parameters must have explicit type annotations | ⬜ Stubbed |
+
+**How it works:**
+```
+.claire file imported/required
+    │
+    ▼
+Bun.plugin intercepts (onLoad, filter: /\.claire$/)
+    │
+    ▼
+Read file contents as text
+    │
+    ▼
+validate(contents, filePath)
+├── Rule 1 fails? → throw Error (file must export a class)
+├── Rule 2 fails? → logClaireException() + process.exit(1)
+└── All pass? → return { contents, loader: "ts" }
+    │
+    ▼
+Bun treats it as TypeScript from here on
+```
+
+**Design decisions:**
+- `process.exit(1)` on Rule 2 failure — hard crash, not a catchable error. The file is invalid, the program should not start.
+- Rule 1 uses `throw new Error()` — different from Rule 2 (will be unified later)
+- Method detection uses access modifier regex (`/^\s*(private|public|protected|override)\s/`) — only checks methods you explicitly declare, ignores shorthand or undecorated functions
+- Constructor is explicitly skipped (constructors don't have return types)
+- `.claire` files are TypeScript under the hood — the extension is a ClaireX convention that triggers stricter compile-time rules
+- `bunfig.toml` preload means users never need to import the plugin manually — it's always active
+
+**What `.claire` files give you (vs plain `.ts`):**
+- Enforced structure: must be a class export
+- Enforced explicitness: all methods must declare return types
+- Future: validator usage guards, parameter type enforcement
+- Signals intent: "this file follows ClaireX rules" — a convention made enforceable
+
+**Known cleanup needed:**
+- `console.log("FAILING LINE:", line)` debug line still in code — remove before merge
+- Rule 1 throws, Rule 2 exits — unify error handling approach
+- Rule 2 checks lines containing `(`, `)`, and `{` with access modifiers — works for standard method declarations but may miss edge cases (multi-line signatures, decorators)
+
+**Future (Rules 3 & 4):**
+- Rule 3 needs AST-level analysis or smarter regex — must understand route registration context to know if a validator is attached
+- Rule 4 is simpler — regex check for untyped params in method signatures (e.g., `(c)` instead of `(c: ClaireContext)`)
+- Both may benefit from a proper TypeScript AST parser (Bun's `transpiler` or `ts-morph`) instead of regex
 
 ---
 
@@ -1078,6 +1129,46 @@ dist/
 - Demo video showing ClaireX in action + Kiro spec-driven process
 
 **Done when:** A judge can clone, install, run, and understand the project from the README alone.
+
+---
+
+### Task 43: VS Code Extension — .claire Language Support (Experimental)
+**Relates to:** Task 40 (.claire extension), Developer Experience
+**Dependencies:** Task 40
+**Status:** Planned — future enhancement
+
+**What to do:**
+- Build a VS Code extension that provides first-class `.claire` file support
+- Separate `.claire` from plain TypeScript in the editor — own language ID, own icon, own rules
+- Inline diagnostics: show ClaireX rule violations as editor errors/warnings (red/yellow squiggles)
+- Could reuse the `validate()` function from `claire-loader.ts` as the validation engine
+- Custom file icon for `.claire` files in the explorer
+- Potential: snippets for ClaireKey, ClaireValidator, ClaireMiddleware boilerplate
+
+**Why this matters:**
+- Currently `.claire` files are treated as TypeScript via `.vscode/settings.json` (`"*.claire": "typescript"`)
+- This works for syntax highlighting and IntelliSense, but ClaireX-specific rules only run at load time (Bun.plugin)
+- A VS Code extension would surface validation errors BEFORE running the code — true IDE-level enforcement
+- Differentiator: no other Bun framework has its own file extension with editor support
+
+**Architecture (planned):**
+```
+VS Code Extension
+├── Language Server (LSP)
+│   ├── Reuses validate() from claire-loader.ts
+│   ├── Publishes diagnostics per .claire file
+│   └── Watches for file changes
+├── Language Configuration
+│   ├── languageId: "claire"
+│   ├── extensions: [".claire"]
+│   └── Inherits TypeScript grammar (TextMate scope)
+└── Package
+    ├── File icons
+    ├── Snippets (ClaireKey, ClaireValidator, etc.)
+    └── Marketplace listing
+```
+
+**Done when:** A `.claire` file shows ClaireX rule violations inline in VS Code without running the code. The extension is published or installable via `.vsix`.
 
 ---
 
@@ -1124,6 +1215,7 @@ dist/
 | 37 | Params Encapsulation — Solved | ✅ Done |
 | 38 | Sub-Exceptions — Scratched | ✅ Done |
 | 39 | Typed Handler Enforcement | ⬜ Pending |
-| 40 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 40 | Bun.plugin — .claire Extension | ✅ Experimental (2 rules working) |
 | 41 | CLI Scaffolding — create-clairex | ⬜ Pending |
 | 42 | Documentation & Submission | ⬜ Final |
+| 43 | VS Code Extension — .claire Support | ⬜ Experimental (Planned) |
