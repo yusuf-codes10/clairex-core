@@ -22,4 +22,9 @@ export const validate = (content: string, filePath: string): void => {
   if (!/^\s*export\s+(default\s+)?class\s+\w+/m.test(content)) {
     throw new Error(`[ClaireX] ${filePath}: .claire files must export a class`);
   }
+
+  // 2. No missing types
+
+  // Rule 3: c.valid<T>() usage without validator → reject
+  // Rule 4: explicit types on all parameters
 };
