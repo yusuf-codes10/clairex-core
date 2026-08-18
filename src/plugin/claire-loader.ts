@@ -23,7 +23,26 @@ export const validate = (content: string, filePath: string): void => {
     throw new Error(`[ClaireX] ${filePath}: .claire files must export a class`);
   }
 
-  // 2. No missing types
+  // Rule 2: All methods must have explicit return types
+  // Matches: ) { or ) async { without a : between ) and {
+  const missingReturnType = /\)\s*\{/;
+  const methodLines = content
+    .split("")
+    .filter(
+      (line) => line.includes("(") && line.includes(")") && line.includes("{"),
+    );
+
+  for (const line of methodLines) {
+    // Skip constructor — constructors don't have return types
+    if (line.includes("constructor")) continue;
+    // Check if there's a : between ) and {
+    const afterParen = line.substring(line.lastIndexOf(")"));
+    if (!afterParen.includes(":")) {
+      throw new Error(
+        `[ClaireX] ${filePath}: All methods must have explicit return types`,
+      );
+    }
+  }
 
   // Rule 3: c.valid<T>() usage without validator → reject
   // Rule 4: explicit types on all parameters
