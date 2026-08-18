@@ -6,8 +6,8 @@ plugin({
     build.onLoad({ filter: /\.claire$/ }, async ({ path }) => {
       const contents = await Bun.file(path).text();
 
-    //   validate ClaireX rules | throws if validated
-    validate(contents, path);
+      //   validate ClaireX rules | throws if validated
+      validate(contents, path);
 
       return {
         contents: contents,
@@ -19,7 +19,7 @@ plugin({
 
 export const validate = (content: string, filePath: string): void => {
   // 1. Rule number 1: Must be a class
-  if(!content.includes('class')) {
+  if (!/^\s*export\s+(default\s+)?class\s+\w+/m.test(content)) {
     throw new Error(`[ClaireX] ${filePath}: .claire files must export a class`);
   }
-}
+};
