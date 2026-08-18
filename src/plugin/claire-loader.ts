@@ -44,6 +44,6 @@ export const validate = (content: string, filePath: string): void => {
     }
   }
 
-  // Rule 3: c.valid<T>() usage without validator → reject
+  // Rule 3: Validators: c.valid<T>() usage without validator → reject
   // Rule 4: explicit types on all parameters
 };
