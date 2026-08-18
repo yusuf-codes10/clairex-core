@@ -1,4 +1,4 @@
-import { plugin } from "bun"; // only thing you need
+import { plugin } from "bun";
 
 plugin({
   name: "claire-loader",
@@ -6,7 +6,6 @@ plugin({
     build.onLoad({ filter: /\.claire$/ }, async ({ path }) => {
       const contents = await Bun.file(path).text();
 
-      //   validate ClaireX rules | throws if validated
       validate(contents, path);
 
       return {
@@ -18,28 +17,23 @@ plugin({
 });
 
 export const validate = (content: string, filePath: string): void => {
-  // 1. Rule number 1: Must be a class
+  // Rule 1: Must export a class
   if (!/^\s*export\s+(default\s+)?class\s+\w+/m.test(content)) {
     throw new Error(`[ClaireX] ${filePath}: .claire files must export a class`);
   }
 
   // Rule 2: All methods must have explicit return types
-  // Matches: ) { or ) async { without a : between ) and {
-  const missingReturnType = /\)\s*\{/;
-  const methodLines = content
-    .split("")
-    .filter(
-      (line) => line.includes("(") && line.includes(")") && line.includes("{"),
-    );
+  const lines = content.split(/\r?\n/);
+  const methodLines = lines.filter(
+    (line) => line.includes("(") && line.includes(")") && line.includes("{")
+  );
 
   for (const line of methodLines) {
-    // Skip constructor — constructors don't have return types
     if (line.includes("constructor")) continue;
-    // Check if there's a : between ) and {
     const afterParen = line.substring(line.lastIndexOf(")"));
     if (!afterParen.includes(":")) {
       throw new Error(
-        `[ClaireX] ${filePath}: All methods must have explicit return types`,
+        `[ClaireX] ${filePath}: All methods must have explicit return types`
       );
     }
   }
