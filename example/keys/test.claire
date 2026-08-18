@@ -1,4 +1,3 @@
-console.log('Hello there');
 import { ClaireKey } from "../../src/core/key";
 import { ClaireContext } from "../../src/core/context";
 import { ClaireException } from "../../src/core/exception";
