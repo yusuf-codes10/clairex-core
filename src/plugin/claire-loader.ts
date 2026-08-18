@@ -25,15 +25,20 @@ export const validate = (content: string, filePath: string): void => {
   // Rule 2: All methods must have explicit return types
   const lines = content.split(/\r?\n/);
   const methodLines = lines.filter(
-    (line) => line.includes("(") && line.includes(")") && line.includes("{")
+    (line) =>
+      line.includes("(") &&
+      line.includes(")") &&
+      line.includes("{") &&
+      /^\s*(private|public|protected|override)\s/.test(line),
   );
 
   for (const line of methodLines) {
     if (line.includes("constructor")) continue;
+    console.log("FAILING LINE:", line); // ← add this
     const afterParen = line.substring(line.lastIndexOf(")"));
     if (!afterParen.includes(":")) {
       throw new Error(
-        `[ClaireX] ${filePath}: All methods must have explicit return types`
+        `[ClaireX] ${filePath}: All methods must have explicit return types`,
       );
     }
   }
