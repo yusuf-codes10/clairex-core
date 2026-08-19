@@ -53,6 +53,7 @@ export function patchModuleLoader(
 
 import * as path from 'path';
 
+// skipping typescript resolution entirely
 function resolveClaireModule(
     typescript: typeof ts,
     moduleName: string,
