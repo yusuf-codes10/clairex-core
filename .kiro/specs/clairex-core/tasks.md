@@ -1283,6 +1283,44 @@ function resolveClaireModule(typescript: typeof ts, moduleName: string, containi
 
 ---
 
+### Task 44: VS Code Extension — clairex-vscode ⬜
+**Relates to:** Task 43 (TypeScript plugin), Task 40 (.claire extension)
+**Dependencies:** Task 43
+**Status:** Pending — next step after Task 43
+
+**What this is:**
+A VS Code extension that wraps the existing `@clairex/typescript-plugin` and provides zero-config `.claire` file support. Currently, users need to manually configure `.vscode/settings.json`, `tsconfig.json`, and select workspace TypeScript. The extension eliminates all manual setup.
+
+**What the extension replaces:**
+
+| Feature | Currently handled by | Extension would handle it |
+|---|---|---|
+| Syntax highlighting for `.claire` | `files.associations` in `.vscode/settings.json` | ✅ Auto — no user config needed |
+| Use workspace TypeScript | `typescript.tsdk` in `.vscode/settings.json` | ✅ Auto — contributes the TS plugin directly |
+| Load the TS plugin | Manual `tsconfig.json` entry | ✅ Auto via `contributes.typescriptServerPlugins` |
+| Custom `.claire` file icon | ❌ Not possible without extension | ✅ Yes — file icon themes |
+| Snippets | ❌ Not available | ✅ `clairekey`, `clairevalidator`, etc. |
+| ClaireX diagnostics | ❌ Only at runtime | ✅ Inline editor warnings |
+
+**What to do:**
+- Create a VS Code extension package (separate folder in `packages/` or own repo)
+- `package.json` with `contributes.typescriptServerPlugins` referencing `@clairex/typescript-plugin`
+- `contributes.languages` — register `.claire` as a language ID
+- `contributes.grammars` — inherit TypeScript grammar (TextMate scope)
+- `contributes.iconThemes` or `contributes.icons` — custom `.claire` file icon
+- `contributes.snippets` — ClaireKey, ClaireValidator, ClaireMiddleware boilerplate
+- Publish to VS Code Marketplace or distribute as `.vsix`
+
+**User experience after installing the extension:**
+1. Install `clairex-vscode` from marketplace
+2. Open a project with `.claire` files
+3. Everything works — syntax highlighting, import resolution, file icon, snippets
+4. No `.vscode/settings.json` edits, no `tsconfig.json` plugin entry needed
+
+**Done when:** Extension installable via `.vsix`, `.claire` files have their own icon, imports resolve without manual config.
+
+---
+
 ## Summary
 
 | # | Task | Status |
@@ -1330,3 +1368,4 @@ function resolveClaireModule(typescript: typeof ts, moduleName: string, containi
 | 41 | CLI Scaffolding — create-clairex | ⬜ Pending |
 | 42 | Documentation & Submission | ⬜ Final |
 | 43 | @clairex/typescript-plugin — Import Resolution | ✅ Done (solves Problem 5) |
+| 44 | VS Code Extension — clairex-vscode | ⬜ Pending |
