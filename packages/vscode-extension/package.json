@@ -1,0 +1,42 @@
+{
+    "name": "clairex-vscode",
+    "displayName": "ClaireX",
+    "description": "Language support for .claire files — ClaireX framework",
+    "version": "0.1.0",
+    "publisher": "clairex",
+    "engines": { "vscode": "^1.80.0" },
+    "categories": ["Programming Languages"],
+    "activationEvents": ["onLanguage:claire"],
+    "main": "./dist/extension.js",
+
+    "contributes": {
+        "typescriptServerPlugins": [{
+            "name": "@clairex/typescript-plugin",
+            "enableForWorkspaceTypeScriptVersions": true
+        }],
+
+        "languages": [{
+            "id": "claire",
+            "extensions": [".claire"],
+            "aliases": ["Claire", "claire"],
+            "configuration": "./language-configuration.json"
+        }],
+
+        "grammars": [{
+            "language": "claire",
+            "scopeName": "source.claire",
+            "path": "./syntaxes/claire.tmLanguage.json"
+        }],
+
+        "iconThemes": [{
+            "id": "clairex-icons",
+            "label": "ClaireX Icons",
+            "path": "./icons/icon-theme.json"
+        }],
+
+        "snippets": [{
+            "language": "claire",
+            "path": "./snippets/claire.json"
+        }]
+    }
+}
