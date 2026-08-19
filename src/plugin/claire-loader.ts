@@ -35,7 +35,7 @@ export const validate = (content: string, filePath: string): void => {
 
   for (const line of methodLines) {
     if (line.includes("constructor")) continue;
-    console.log("FAILING LINE:", line); // ← add this
+    // console.log("FAILING LINE:", line); // ← add this
     const afterParen = line.substring(line.lastIndexOf(")"));
     if (!afterParen.includes(":")) {
       logClaireException("ClairePlugin", 0, `Missing return type: ${filePath}`);
