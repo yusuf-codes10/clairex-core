@@ -1,0 +1,14 @@
+{
+    "name": "@clairex/typescript-plugin",
+    "version": "0.1.0",
+    "description": "TypeScript Language Service Plugin for .claire file resolution",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc -p ./tsconfig.json"
+    },
+    "keywords": ["clairex", "typescript", "plugin", "claire"],
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    }
+}
