@@ -11,9 +11,6 @@
     "categories": [
         "Programming Languages"
     ],
-    "activationEvents": [
-        "onLanguage:claire"
-    ],
     "main": "./dist/extension.js",
     "scripts": {
         "build": "tsc -p ./tsconfig.json"
@@ -23,7 +20,7 @@
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "@clairex/typescript-plugin": "*"
+        "@clairex/typescript-plugin": "file:../typescript-plugin"
     },
     "contributes": {
         "typescriptServerPlugins": [
