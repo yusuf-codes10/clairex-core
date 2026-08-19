@@ -9,7 +9,7 @@
     "allowJs": true,
     "types": ["bun"],
 
-    "plugins": [{ "name": "@clairex/typescript-plugin" }],
+    "plugins": [{ "name": "./packages/typescript-plugin/dist" }],
 
     // Bundler mode
     "moduleResolution": "bundler",

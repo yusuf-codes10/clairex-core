@@ -17,7 +17,8 @@
     "app": "bun run example/app.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@clairex/typescript-plugin": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5"
