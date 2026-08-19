@@ -3,7 +3,7 @@
     {
       "name": "claire",
       "base": "typescript",
-      "color": "purple-400",
+      "color": "#722f37",
       "fileExtensions": ["claire"]
     }
   ]
