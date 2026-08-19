@@ -1,0 +1,17 @@
+{
+    "ClaireKey": {
+        "prefix": "clairekey",
+        "body": [
+            "export class ${1:Name}Key extends ClaireKey {",
+            "\tconstructor() {",
+            "\t\tsuper('/${2:prefix}');",
+            "\t}",
+            "",
+            "\tregister(): void {",
+            "\t\t$0",
+            "\t}",
+            "}"
+        ],
+        "description": "ClaireKey scaffold"
+    }
+}
