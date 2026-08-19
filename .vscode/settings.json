@@ -1,0 +1,10 @@
+{
+  "material-icon-theme.files.customClones": [
+    {
+      "name": "claire",
+      "base": "typescript",
+      "color": "#722f37",
+      "fileExtensions": ["claire"]
+    }
+  ]
+}

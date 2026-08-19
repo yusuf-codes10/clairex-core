@@ -1,0 +1,10 @@
+{
+    "iconDefinitions": {
+        "claire-file": {
+            "iconPath": "../assets/claire-icon.png"
+        }
+    },
+    "fileExtensions": {
+        "claire": "claire-file"
+    }
+}

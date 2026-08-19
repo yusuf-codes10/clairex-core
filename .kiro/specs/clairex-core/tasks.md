@@ -428,6 +428,11 @@ These are known architectural issues that need solving in upcoming tasks.
 ### Problem 4: Global Error Handling ✅ SOLVED
 ~~No try/catch in `fetch` handler.~~ ClaireException + try/catch now handles all thrown errors globally. Intentional throws return their typed response, unknown errors return generic 500.
 
+### Problem 5: `.claire` Import Resolution in VS Code ✅ SOLVED
+**Branch:** `5-claire-extension`
+
+~~TypeScript's module resolver does not recognize `.claire` as a valid file extension.~~ Solved via `@clairex/typescript-plugin` — a TypeScript Language Service Plugin that patches `resolveModuleNameLiterals` on the language service host. When TypeScript encounters a `.claire` import, the plugin resolves the path manually (using `path.resolve` + `sys.fileExists`) and returns it with `extension: ts.Extension.Ts`. TypeScript reads the file as TypeScript — full types, no `any`, no generated files.
+
 ---
 
 ## Remaining Tasks
@@ -1037,20 +1042,71 @@ dist/
 
 ---
 
-### Task 40: Bun.plugin — .claire File Extension (Experimental)
-**Relates to:** ClaireX differentiator  
-**Dependencies:** Task 24, Task 39
+### Task 40: Bun.plugin — .claire File Extension (Experimental) ✅
+**Commits:** `28d01a9`, `626ab60`, `5129a51`, `51f5de6`, `a43b2a8`, `6d9bfc9`, `20b0090`, `22c090a`, `1bc93e3`, `75d00d0`, `cec778d`, `181a7bf`, `ad88640`, `c5786fe`, `80e1f03`, `0409798`
+**Branch:** `5-claire-extension`
+**Status:** Experimental — 2 rules working, 2 rules stubbed
 
-**What to do:**
-- Implement custom Bun.plugin that registers `.claire` file loader
-- Compile-time enforcement of ClaireX rules:
-  - `c.valid<T>()` without validator on route → compile error
-  - Validator at wrong level → compile error
-  - Handler missing explicit return type → compile error
-  - Untyped params access → compile error
-- Moves runtime guardrails (Task 29, 30) to compile time
+**What was done:**
+- Implemented `claire-loader` Bun.plugin in `src/plugin/claire-loader.ts`
+- Registered via `bunfig.toml` with `preload = ["@clairex/core/plugin"]` — intercepted before runtime
+- Plugin hooks into `build.onLoad` with `filter: /\.claire$/` — any `.claire` file is caught
+- On load: reads file text → validates against ClaireX rules → passes through with `loader: "ts"` if valid
+- Added `.vscode/settings.json`: `"files.associations": { "*.claire": "typescript" }` — VS Code treats `.claire` as TypeScript (syntax highlighting, IntelliSense)
+- Exported `validate()` function for potential reuse in testing/tooling
 
-**Done when:** A `.claire` file rejects invalid code before it even runs. Editor shows errors inline.
+**Rules implemented:**
+
+| Rule | What it checks | Status |
+|------|----------------|--------|
+| Rule 1: Export a class | `.claire` files must export a class (named or default). Regex: `/^\s*export\s+(default\s+)?class\s+\w+/m` | ✅ Working |
+| Rule 2: Explicit return types | Every method with an access modifier (`private`, `public`, `protected`, `override`) must declare a return type after `)`. Skips constructors. | ✅ Working |
+| Rule 3: Validator usage guard | `c.valid<T>()` used without a ClaireValidator on the route → reject | ⬜ Stubbed |
+| Rule 4: Explicit parameter types | All method parameters must have explicit type annotations | ⬜ Stubbed |
+
+**How it works:**
+```
+.claire file imported/required
+    │
+    ▼
+Bun.plugin intercepts (onLoad, filter: /\.claire$/)
+    │
+    ▼
+Read file contents as text
+    │
+    ▼
+validate(contents, filePath)
+├── Rule 1 fails? → throw Error (file must export a class)
+├── Rule 2 fails? → logClaireException() + process.exit(1)
+└── All pass? → return { contents, loader: "ts" }
+    │
+    ▼
+Bun treats it as TypeScript from here on
+```
+
+**Design decisions:**
+- `process.exit(1)` on Rule 2 failure — hard crash, not a catchable error. The file is invalid, the program should not start.
+- Rule 1 uses `throw new Error()` — different from Rule 2 (will be unified later)
+- Method detection uses access modifier regex (`/^\s*(private|public|protected|override)\s/`) — only checks methods you explicitly declare, ignores shorthand or undecorated functions
+- Constructor is explicitly skipped (constructors don't have return types)
+- `.claire` files are TypeScript under the hood — the extension is a ClaireX convention that triggers stricter compile-time rules
+- `bunfig.toml` preload means users never need to import the plugin manually — it's always active
+
+**What `.claire` files give you (vs plain `.ts`):**
+- Enforced structure: must be a class export
+- Enforced explicitness: all methods must declare return types
+- Future: validator usage guards, parameter type enforcement
+- Signals intent: "this file follows ClaireX rules" — a convention made enforceable
+
+**Known cleanup needed:**
+- `console.log("FAILING LINE:", line)` debug line still in code — remove before merge
+- Rule 1 throws, Rule 2 exits — unify error handling approach
+- Rule 2 checks lines containing `(`, `)`, and `{` with access modifiers — works for standard method declarations but may miss edge cases (multi-line signatures, decorators)
+
+**Future (Rules 3 & 4):**
+- Rule 3 needs AST-level analysis or smarter regex — must understand route registration context to know if a validator is attached
+- Rule 4 is simpler — regex check for untyped params in method signatures (e.g., `(c)` instead of `(c: ClaireContext)`)
+- Both may benefit from a proper TypeScript AST parser (Bun's `transpiler` or `ts-morph`) instead of regex
 
 ---
 
@@ -1078,6 +1134,190 @@ dist/
 - Demo video showing ClaireX in action + Kiro spec-driven process
 
 **Done when:** A judge can clone, install, run, and understand the project from the README alone.
+
+---
+
+### Task 43: @clairex/typescript-plugin — .claire Import Resolution ✅
+**Commits:** `0ebb771`, `be7c6c8`, `112ef50`, `590063e`, `92e06b1`, `e1e88f7`, `ae9b017`, `cd3704b`, `7cf8fd7`, `ea087d5`, `c91e428`, `2783ceb`, `3313619`
+**Branch:** `5-claire-extension`
+
+**What was done:**
+- Built `@clairex/typescript-plugin` — a TypeScript Language Service Plugin that resolves `.claire` imports in VS Code
+- Lives in `packages/typescript-plugin/` within the monorepo (own `package.json`, own build, publishable independently)
+- Hooks into `resolveModuleNameLiterals` on the TS language service host
+- For `.claire` imports that TypeScript can't resolve: manually resolves the path using `path.resolve()` + `typescript.sys.fileExists()`
+- Returns resolved files with `extension: typescript.Extension.Ts` — TypeScript reads them as TypeScript
+- Zero transformation needed — `.claire` files ARE valid TypeScript, just with a different extension
+- Inspired by `typescript-svelte-plugin` architecture (researched Svelte/Vue/Volar source code)
+
+**File structure:**
+```
+packages/
+└── typescript-plugin/
+    ├── package.json          ← @clairex/typescript-plugin
+    ├── tsconfig.json         ← commonjs output (TS Server uses require())
+    ├── .gitignore            ← ignores dist/ and node_modules/
+    └── src/
+        ├── index.ts          ← init() → create() → patchModuleLoader()
+        ├── module-loader.ts  ← patches resolveModuleNameLiterals, manual path resolution
+        ├── claire-sys.ts     ← custom sys (unused, kept for future)
+        └── utils.ts          ← isClaireFilePath() helper
+```
+
+**How it works:**
+```
+.claire import encountered by TypeScript
+    │
+    ▼
+Plugin intercepts via patched resolveModuleNameLiterals()
+    │
+    ▼
+Is it a .claire import? AND did TypeScript fail to resolve it?
+    │ YES
+    ▼
+path.resolve(containingDir, moduleName) → absolute path
+    │
+    ▼
+typescript.sys.fileExists(resolvedPath) → true?
+    │ YES
+    ▼
+Return { resolvedFileName, extension: ts.Extension.Ts, isExternalLibraryImport: false }
+    │
+    ▼
+TypeScript reads the .claire file as TypeScript — full types flow
+```
+
+**Key code (`module-loader.ts`):**
+```typescript
+import type ts from 'typescript/lib/tsserverlibrary';
+import { isClaireFilePath } from './utils';
+import * as path from 'path';
+
+export function patchModuleLoader(
+    typescript: typeof ts,
+    languageServiceHost: ts.LanguageServiceHost
+): void {
+    const origResolveModuleNameLiterals = languageServiceHost.resolveModuleNameLiterals?.bind(languageServiceHost);
+
+    if (languageServiceHost.resolveModuleNameLiterals) {
+        languageServiceHost.resolveModuleNameLiterals = (moduleLiterals, containingFile, ...) => {
+            const resolved = origResolveModuleNameLiterals!(...);
+            return resolved.map((result, idx) => {
+                const moduleName = moduleLiterals[idx].text;
+                if (!isClaireFilePath(moduleName) || result.resolvedModule) return result;
+                const resolvedModule = resolveClaireModule(typescript, moduleName, containingFile);
+                return resolvedModule ? { resolvedModule } : result;
+            });
+        };
+    }
+}
+
+function resolveClaireModule(typescript: typeof ts, moduleName: string, containingFile: string): ts.ResolvedModuleFull | undefined {
+    const containingDir = path.dirname(containingFile);
+    const resolvedPath = path.resolve(containingDir, moduleName);
+    if (typescript.sys.fileExists(resolvedPath)) {
+        return { resolvedFileName: resolvedPath, extension: typescript.Extension.Ts, isExternalLibraryImport: false };
+    }
+    return undefined;
+}
+```
+
+**Configuration required:**
+
+1. Root `package.json` — workspaces + devDependency:
+```json
+{
+    "workspaces": ["packages/*"],
+    "devDependencies": { "@clairex/typescript-plugin": "workspace:*" }
+}
+```
+
+2. `tsconfig.json` (any project using `.claire` files):
+```json
+{
+    "compilerOptions": {
+        "plugins": [{ "name": "@clairex/typescript-plugin" }]
+    }
+}
+```
+
+3. VS Code must use **workspace TypeScript** (not bundled):
+   - `Ctrl+Shift+P` → "TypeScript: Select TypeScript Version" → "Use Workspace Version"
+
+4. `example/tsconfig.json` — separate tsconfig for the example folder (excluded from root):
+```json
+{
+    "compilerOptions": {
+        "plugins": [{ "name": "@clairex/typescript-plugin" }],
+        "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
+        ...
+    },
+    "include": ["./**/*"]
+}
+```
+
+**Lessons learned (debugging):**
+- TypeScript plugins CANNOT use relative paths — must be a package name found in `node_modules`
+- VS Code's bundled TS does NOT search the project's `node_modules` for plugins — must select workspace TS
+- `ts.resolveModuleName()` doesn't find `.claire` files even with custom sys — TypeScript has hardcoded extension lists
+- Manual `path.resolve()` + `fileExists()` is the correct approach (skip TS resolution entirely)
+- Files excluded from `tsconfig.json` don't get plugin treatment — `example/` needed its own tsconfig
+- Bun workspaces require `"workspace:*"` in devDependencies to create the symlink
+
+**What this gives users:**
+- ✅ `.claire` imports resolve with full types in VS Code
+- ✅ No red "Cannot find module" errors
+- ✅ No `any` type anywhere — full type safety maintained
+- ✅ No generated declaration files, no artifacts
+- ✅ Same approach as Vue (Volar) and Svelte — proven pattern
+
+**Problem 5: SOLVED ✅**
+
+**Future (Phase 2 & 3):**
+- Wrap in a VS Code extension (`contributes.typescriptServerPlugins`) for auto-loading without manual tsconfig entry
+- Custom `.claire` file icon
+- Custom diagnostics from `validate()` rules
+- Snippets for ClaireKey, ClaireValidator, ClaireMiddleware
+- VS Code Marketplace listing
+
+---
+
+### Task 44: VS Code Extension — clairex-vscode ⬜
+**Relates to:** Task 43 (TypeScript plugin), Task 40 (.claire extension)
+**Dependencies:** Task 43
+**Status:** Pending — next step after Task 43
+
+**What this is:**
+A VS Code extension that wraps the existing `@clairex/typescript-plugin` and provides zero-config `.claire` file support. Currently, users need to manually configure `.vscode/settings.json`, `tsconfig.json`, and select workspace TypeScript. The extension eliminates all manual setup.
+
+**What the extension replaces:**
+
+| Feature | Currently handled by | Extension would handle it |
+|---|---|---|
+| Syntax highlighting for `.claire` | `files.associations` in `.vscode/settings.json` | ✅ Auto — no user config needed |
+| Use workspace TypeScript | `typescript.tsdk` in `.vscode/settings.json` | ✅ Auto — contributes the TS plugin directly |
+| Load the TS plugin | Manual `tsconfig.json` entry | ✅ Auto via `contributes.typescriptServerPlugins` |
+| Custom `.claire` file icon | ❌ Not possible without extension | ✅ Yes — file icon themes |
+| Snippets | ❌ Not available | ✅ `clairekey`, `clairevalidator`, etc. |
+| ClaireX diagnostics | ❌ Only at runtime | ✅ Inline editor warnings |
+
+**What to do:**
+- Create a VS Code extension package (separate folder in `packages/` or own repo)
+- `package.json` with `contributes.typescriptServerPlugins` referencing `@clairex/typescript-plugin`
+- `contributes.languages` — register `.claire` as a language ID
+- `contributes.grammars` — inherit TypeScript grammar (TextMate scope)
+- `contributes.iconThemes` or `contributes.icons` — custom `.claire` file icon
+- `contributes.snippets` — ClaireKey, ClaireValidator, ClaireMiddleware boilerplate
+- Publish to VS Code Marketplace or distribute as `.vsix`
+
+**User experience after installing the extension:**
+1. Install `clairex-vscode` from marketplace
+2. Open a project with `.claire` files
+3. Everything works — syntax highlighting, import resolution, file icon, snippets
+4. No `.vscode/settings.json` edits, no `tsconfig.json` plugin entry needed
+
+**Done when:** Extension installable via `.vsix`, `.claire` files have their own icon, imports resolve without manual config.
 
 ---
 
@@ -1124,6 +1364,8 @@ dist/
 | 37 | Params Encapsulation — Solved | ✅ Done |
 | 38 | Sub-Exceptions — Scratched | ✅ Done |
 | 39 | Typed Handler Enforcement | ⬜ Pending |
-| 40 | Bun.plugin — .claire Extension | ⬜ Experimental |
+| 40 | Bun.plugin — .claire Extension | ✅ Experimental (2 rules working) |
 | 41 | CLI Scaffolding — create-clairex | ⬜ Pending |
 | 42 | Documentation & Submission | ⬜ Final |
+| 43 | @clairex/typescript-plugin — Import Resolution | ✅ Done (solves Problem 5) |
+| 44 | VS Code Extension — clairex-vscode | ⬜ Pending |

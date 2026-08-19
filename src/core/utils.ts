@@ -31,12 +31,12 @@ export const matchRoute = (
 };
 
 export const clairexBanner = (port: number): void => {
-  const purple: string = "\x1b[38;2;100;60;220m";
+  const wine: string = "\x1b[38;2;114;47;55m";
   const dim: string = "\x1b[2m";
   const reset: string = "\x1b[0m";
 
   const banner: string = `
-${purple}   ╔═══════════════════════════════════════════════════════════════════╗
+${wine}   ╔═══════════════════════════════════════════════════════════════════╗
    ║                                                                   ║
    ║    ██████╗ ██╗      █████╗ ██╗██████╗ ███████╗██╗  ██╗           ║
    ║   ██╔════╝ ██║     ██╔══██╗██║██╔══██╗██╔════╝╚██╗██╔╝           ║

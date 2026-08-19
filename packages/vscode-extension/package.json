@@ -1,0 +1,73 @@
+{
+    "name": "clairex-vscode",
+    "icon": "./assets/claire-icon.png",
+    "displayName": "ClaireX",
+    "description": "Language support for .claire files — ClaireX framework",
+    "version": "0.1.0",
+    "publisher": "clairex",
+    "engines": {
+        "vscode": "^1.80.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "main": "./dist/extension.js",
+    "scripts": {
+        "build": "tsc -p ./tsconfig.json"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.80.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {},
+    "files": [
+        "dist/",
+        "assets/",
+        "icons/",
+        "snippets/",
+        "syntaxes/",
+        "node_modules/",
+        "language-configuration.json"
+    ],
+    "contributes": {
+        "typescriptServerPlugins": [
+            {
+                "name": "@clairex/typescript-plugin",
+                "enableForWorkspaceTypeScriptVersions": true
+            }
+        ],
+        "languages": [
+            {
+                "id": "claire",
+                "extensions": [
+                    ".claire"
+                ],
+                "aliases": [
+                    "Claire",
+                    "claire"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "claire",
+                "scopeName": "source.claire",
+                "path": "./syntaxes/claire.tmLanguage.json"
+            }
+        ],
+        "iconThemes": [
+            {
+                "id": "clairex-icons",
+                "label": "ClaireX Icons",
+                "path": "./icons/icon-theme.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "claire",
+                "path": "./snippets/claire.json"
+            }
+        ]
+    }
+}
