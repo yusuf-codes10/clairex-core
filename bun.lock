@@ -23,7 +23,7 @@
       "name": "clairex-vscode",
       "version": "0.1.0",
       "dependencies": {
-        "@clairex/typescript-plugin": "file:../typescript-plugin",
+        "@clairex/typescript-plugin": "0.1.0",
       },
       "devDependencies": {
         "@types/vscode": "^1.80.0",
@@ -47,7 +47,5 @@
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
-
-    "clairex-vscode/@clairex/typescript-plugin": ["@clairex/typescript-plugin@file:packages/typescript-plugin", { "devDependencies": { "typescript": "^5.0.0" } }],
   }
 }
