@@ -20,7 +20,7 @@
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "@clairex/typescript-plugin": "file:../typescript-plugin"
+        "@clairex/typescript-plugin": "0.1.0"
     },
     "contributes": {
         "typescriptServerPlugins": [
