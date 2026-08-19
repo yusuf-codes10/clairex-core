@@ -7,13 +7,14 @@
         "moduleResolution": "bundler",
         "allowImportingTsExtensions": true,
         "verbatimModuleSyntax": true,
+        "plugins": [{ "name": "@clairex/typescript-plugin" }],
+
         "noEmit": true,
         "strict": true,
         "skipLibCheck": true,
         "noUncheckedIndexedAccess": true,
         "noImplicitOverride": true,
         "types": ["bun"],
-        "plugins": [{ "name": "../packages/typescript-plugin/dist" }]
     },
     "include": ["./**/*"]
 }

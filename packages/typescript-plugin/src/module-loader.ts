@@ -51,49 +51,23 @@ export function patchModuleLoader(
     }
 }
 
+import * as path from 'path';
+
 function resolveClaireModule(
     typescript: typeof ts,
     moduleName: string,
     containingFile: string,
     options: ts.CompilerOptions
 ): ts.ResolvedModuleFull | undefined {
-    // Use TypeScript's own resolution but with a custom sys 
-    // that knows .claire files exist
-    const claireSys: ts.System = {
-        ...typescript.sys,
-        fileExists(path: string): boolean {
-            return typescript.sys.fileExists(path);
-        }
-    };
+    // Since .claire imports always use the full extension,
+    // resolve the path manually relative to the containing file
+    const containingDir = path.dirname(containingFile);
+    const resolvedPath = path.resolve(containingDir, moduleName);
 
-    const resolved = typescript.resolveModuleName(
-        moduleName,
-        containingFile,
-        options,
-        claireSys
-    );
-
-    if (resolved.resolvedModule) {
-        // Tell TypeScript to treat it as a .ts file
+    // Check if the file actually exists
+    if (typescript.sys.fileExists(resolvedPath)) {
         return {
-            resolvedFileName: resolved.resolvedModule.resolvedFileName,
-            extension: typescript.Extension.Ts,
-            isExternalLibraryImport: resolved.resolvedModule.isExternalLibraryImport
-        };
-    }
-
-    // If TS still can't find it, try resolving the path manually
-    // (the file exists, TS just doesn't try .claire as an extension)
-    const path = typescript.resolveModuleName(
-        moduleName,
-        containingFile,
-        { ...options, allowArbitraryExtensions: true },
-        claireSys
-    );
-
-    if (path.resolvedModule) {
-        return {
-            resolvedFileName: path.resolvedModule.resolvedFileName,
+            resolvedFileName: resolvedPath,
             extension: typescript.Extension.Ts,
             isExternalLibraryImport: false
         };
@@ -101,3 +75,4 @@ function resolveClaireModule(
 
     return undefined;
 }
+
