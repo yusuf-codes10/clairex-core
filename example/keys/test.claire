@@ -69,4 +69,8 @@ export class userKey extends ClaireKey {
     private showSomething(): void {
         console.log('something');
     }
+
+    private test() {
+        console.log('hello');
+    }
 }

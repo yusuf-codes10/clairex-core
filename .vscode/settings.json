@@ -1,6 +1,10 @@
 {
-  "files.associations": {
-    "*.claire": "typescript"
-  },
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "material-icon-theme.files.customClones": [
+    {
+      "name": "claire",
+      "base": "typescript",
+      "color": "purple-400",
+      "fileExtensions": ["claire"]
+    }
+  ]
 }

@@ -9,8 +9,6 @@
     "allowJs": true,
     "types": ["bun"],
 
-    "plugins": [{ "name": "@clairex/typescript-plugin" }],
-
     // Bundler mode
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
