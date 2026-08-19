@@ -20,6 +20,15 @@
         "typescript": "^5.0.0"
     },
     "dependencies": {},
+    "files": [
+        "dist/",
+        "assets/",
+        "icons/",
+        "snippets/",
+        "syntaxes/",
+        "node_modules/",
+        "language-configuration.json"
+    ],
     "contributes": {
         "typescriptServerPlugins": [
             {
