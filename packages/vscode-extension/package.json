@@ -1,5 +1,6 @@
 {
     "name": "clairex-vscode",
+    "icon": "./assets/claire-icon.png",
     "displayName": "ClaireX",
     "description": "Language support for .claire files — ClaireX framework",
     "version": "0.1.0",
