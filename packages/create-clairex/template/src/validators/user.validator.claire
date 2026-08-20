@@ -1,0 +1,21 @@
+import { ClaireValidator } from "@clairex/core";
+import type { ValidationSchema } from "@clairex/core";
+
+/**
+ * One validator per resource — not one per action.
+ *
+ * ClaireX adjusts enforcement based on the HTTP method:
+ *   POST / PUT  → every `required` field must be present
+ *   PATCH       → all fields optional, but type/min/max still enforced
+ *
+ * Fields marked `immutable` are rejected on PATCH.
+ */
+export class userValidator extends ClaireValidator {
+  override rules(): ValidationSchema {
+    return {
+      id: { type: "number", required: true, immutable: true },
+      name: { type: "string", required: true, min: 3, max: 50 },
+      age: { type: "number", required: true, min: 18 },
+    };
+  }
+}

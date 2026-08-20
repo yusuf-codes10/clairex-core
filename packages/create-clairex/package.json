@@ -1,0 +1,25 @@
+{
+    "name": "create-clairex",
+    "version": "1.0.0",
+    "description": "Scaffold a new ClaireX project — class-based, explicitly-typed web framework for Bun",
+    "type": "module",
+    "bin": {
+        "create-clairex": "./index.ts"
+    },
+    "files": [
+        "index.ts",
+        "template"
+    ],
+    "keywords": [
+        "clairex",
+        "bun",
+        "scaffold",
+        "create",
+        "framework",
+        "typescript"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "@types/bun": "latest"
+    }
+}

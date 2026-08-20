@@ -1,0 +1,4 @@
+# Required — registers the .claire file loader.
+# Without this, .claire files are parsed without the ClaireX loader
+# and their exports will not be found.
+preload = ["@clairex/core/plugin"]
