@@ -23,11 +23,8 @@
     "files": [
         "dist/",
         "assets/",
-        "icons/",
         "snippets/",
-        "syntaxes/",
-        "node_modules/",
-        "language-configuration.json"
+        "node_modules/"
     ],
     "contributes": {
         "typescriptServerPlugins": [
@@ -36,36 +33,24 @@
                 "enableForWorkspaceTypeScriptVersions": true
             }
         ],
-        "languages": [
-            {
-                "id": "claire",
-                "extensions": [
-                    ".claire"
-                ],
-                "aliases": [
-                    "Claire",
-                    "claire"
-                ],
-                "configuration": "./language-configuration.json"
-            }
-        ],
-        "grammars": [
-            {
-                "language": "claire",
-                "scopeName": "source.claire",
-                "path": "./syntaxes/claire.tmLanguage.json"
-            }
-        ],
-        "iconThemes": [
-            {
-                "id": "clairex-icons",
-                "label": "ClaireX Icons",
-                "path": "./icons/icon-theme.json"
-            }
-        ],
+        "configurationDefaults": {
+            "files.associations": {
+                "*.claire": "typescript"
+            },
+            "material-icon-theme.files.customClones": [
+                {
+                    "name": "claire",
+                    "base": "typescript",
+                    "color": "#722f37",
+                    "fileExtensions": [
+                        "claire"
+                    ]
+                }
+            ]
+        },
         "snippets": [
             {
-                "language": "claire",
+                "language": "typescript",
                 "path": "./snippets/claire.json"
             }
         ]
