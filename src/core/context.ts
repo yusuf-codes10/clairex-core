@@ -8,6 +8,7 @@ export class ClaireContext {
   public response: ClaireResponse;
 
   private _valid: unknown = {};
+  private _partial: unknown = {};
   private _auth: Record<string, unknown> | null = null;
 
   constructor(req: Request, params: Record<string, string> = {}) {
@@ -45,8 +46,11 @@ export class ClaireContext {
   }
 
   // patched
-  patched<T>(): T {
-    return '' as T;
+  patched<T>(): Partial<T> {
+    if (!this._partial) {
+      throw new ClaireException(500, 'This route received a full body. Use c.valid<T>() instead.');
+    }
+    return this._valid as Partial<T>;
   }
 
   /**
