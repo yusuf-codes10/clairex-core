@@ -136,6 +136,7 @@ export abstract class ClaireValidator extends ClaireMiddleware {
     }
 
     //   store validated body somewhere
+    c.partial = isPartial;
     c.body = validated;
   }
 
