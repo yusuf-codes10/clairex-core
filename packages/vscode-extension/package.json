@@ -11,17 +11,12 @@
     "categories": [
         "Programming Languages"
     ],
-    "main": "./dist/extension.js",
-    "scripts": {
-        "build": "tsc -p ./tsconfig.json"
-    },
     "devDependencies": {
         "@types/vscode": "^1.80.0",
         "typescript": "^5.0.0"
     },
     "dependencies": {},
     "files": [
-        "dist/",
         "assets/",
         "snippets/",
         "node_modules/"
