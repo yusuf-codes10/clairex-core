@@ -1,7 +1,7 @@
 import type { ClaireContext } from "./context";
 import { ClaireException } from "./exception";
 import { ClaireMiddleware } from "./middleware";
-import type { ValidationRule, ValidationSchema } from './types';
+import type { ValidationRule, ValidationSchema } from "./types";
 
 /**
  * Abstract base class for request body validation.
@@ -25,8 +25,7 @@ import type { ValidationRule, ValidationSchema } from './types';
  * const body = c.valid<User>();
  */
 export abstract class ClaireValidator extends ClaireMiddleware {
-
-    /**
+  /**
    * Define the validation schema for the request body.
    * Each key represents a field, and its value defines the validation rules.
    *
@@ -107,9 +106,18 @@ export abstract class ClaireValidator extends ClaireMiddleware {
           ).toResponse();
         }
       }
-
     }
     //   store validated body somewhere
     c.body = body;
+  }
+
+  protected partial(schema: ValidationSchema): ValidationSchema {
+    const result: ValidationSchema = {};
+    for (const key in schema) {
+      const rule = schema[key];
+
+      if (rule) result[key] = { ...rule, required: false };
+    }
+    return result;
   }
 }
