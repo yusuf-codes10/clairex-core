@@ -63,6 +63,19 @@ export abstract class ClaireValidator extends ClaireMiddleware {
 
     const validated: Record<string, unknown> = {};
 
+    // immutable fields cannot be sent on PATCH
+    if (isPartial) {
+      const full: ValidationSchema = this.rules();
+      for (const key in full) {
+        if (full[key]?.immutable && body[key] !== undefined) {
+          return new ClaireException(
+            400,
+            `Validation failed!: "${key}" cannot be updated`,
+          ).toResponse();
+        }
+      }
+    }
+
     // check body against this.rules()
     // if invalid → throw ValidationException
     // if valid → store typed data somewhere

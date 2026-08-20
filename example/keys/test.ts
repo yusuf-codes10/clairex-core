@@ -1,7 +1,7 @@
 import { ClaireKey } from "../../src/core/key";
 import { ClaireContext } from "../../src/core/context";
 import { ClaireException } from "../../src/core/exception";
-import { userValidator } from "../validators/user.validator.claire";
+import { userValidator } from "../validators/user.validator.ts";
 
 type User = {
   id: number;
