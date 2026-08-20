@@ -8,7 +8,7 @@ export class ClaireContext {
   public response: ClaireResponse;
 
   private _valid: unknown = {};
-  private _partial: unknown = {};
+  private _partial: boolean = false;
   private _auth: Record<string, unknown> | null = null;
 
   constructor(req: Request, params: Record<string, string> = {}) {
@@ -18,6 +18,10 @@ export class ClaireContext {
 
   set body(data: unknown) {
     this._valid = data;
+  }
+
+  set partial(flag: boolean) {
+    this._partial = flag;
   }
 
   /**
@@ -31,6 +35,13 @@ export class ClaireContext {
    * const user = c.valid<User>();
    */
   valid<T>(): T {
+    // reject partial bodies
+    if(this._partial) {
+      throw new ClaireException(500,
+        'This route received a partial body (PATCH). Use c.patched<T>() instead.'
+      )
+    }
+
     if (
       this._valid === undefined ||
       (typeof this._valid === "object" &&
