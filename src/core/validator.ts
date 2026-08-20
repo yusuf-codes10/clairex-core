@@ -44,12 +44,14 @@ export abstract class ClaireValidator extends ClaireMiddleware {
   abstract rules(): ValidationSchema;
 
   override async before(c: ClaireContext): Promise<void | Response> {
-    const body = (await c.request.json()) as Record<string, unknown>;
-    const schema = this.rules();
-
     const method: string = c.request.method.toUpperCase();
 
     if (method === 'GET' || method === 'DELETE' || method === 'HEAD' || method === 'OPTIONS') return;
+
+    const isPartial: boolean = method === 'PATCH';
+    const schema: ValidationSchema = isPartial ? this.partial(this.rules()) : this.rules();
+
+    const body = (await c.request.json()) as Record<string, unknown>;
 
     // check body against this.rules()
     // if invalid → throw ValidationException
