@@ -1,4 +1,7 @@
 {
+  "files.associations": {
+    "*.claire": "typescript"
+  },
   "material-icon-theme.files.customClones": [
     {
       "name": "claire",
