@@ -1,8 +1,7 @@
 import { ClaireKey } from "../../src/core/key";
 import { ClaireContext } from "../../src/core/context";
 import { ClaireException } from "../../src/core/exception";
-import { userValidator } from "../validators/users/userValidator.claire";
-import { updateUserValidator } from "../validators/users/patchValidator.claire";
+import { userValidator } from "../validators/user.validator.claire";
 
 type User = {
     id: number,
@@ -26,7 +25,7 @@ export class userKey extends ClaireKey {
         this.routes('get', '/', this.getUsers);
         this.routes('post', '/', this.createUser, [new userValidator()]);
         this.routes('get', '/:id', this.getUserById);
-        this.routes('patch', '/:id', this.updateUserName, [new updateUserValidator()]);
+        this.routes('patch', '/:id', this.updateUserName, [new userValidator()]);
     }
 
     private getUsers (c: ClaireContext): Response {
