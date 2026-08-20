@@ -1,7 +1,7 @@
 {
   "name": "@clairex/core",
   "description": "A class-based, explicitly-typed web framework for Bun. OOP-first, built-in validation, zero external dependencie",
-  "module": "index.ts",
+  "module": "dist/index.js",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build ./src/index.ts --outdir ./dist --target bun && bunx tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && bun build ./src/index.ts ./src/plugin/claire-loader.ts --outdir ./dist --target bun && bunx tsc -p tsconfig.build.json",
     "dev": "bun run src/index.ts",
     "test": "bun test",
     "example": "bun run example/index.ts",
@@ -23,5 +23,15 @@
   "peerDependencies": {
     "typescript": "^5"
   },
-  "workspaces": ["packages/*"]
+  "workspaces": [
+    "packages/*"
+  ],
+"exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": "./dist/plugin/claire-loader.js"
+}
+
 }
