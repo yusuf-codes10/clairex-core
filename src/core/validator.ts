@@ -47,10 +47,18 @@ export abstract class ClaireValidator extends ClaireMiddleware {
   override async before(c: ClaireContext): Promise<void | Response> {
     const method: string = c.request.method.toUpperCase();
 
-    if (method === 'GET' || method === 'DELETE' || method === 'HEAD' || method === 'OPTIONS') return;
+    if (
+      method === "GET" ||
+      method === "DELETE" ||
+      method === "HEAD" ||
+      method === "OPTIONS"
+    )
+      return;
 
-    const isPartial: boolean = method === 'PATCH';
-    const schema: ValidationSchema = isPartial ? this.partial(this.rules()) : this.rules();
+    const isPartial: boolean = method === "PATCH";
+    const schema: ValidationSchema = isPartial
+      ? this.partial(this.rules())
+      : this.rules();
 
     const body = (await c.request.json()) as Record<string, unknown>;
 
@@ -115,11 +123,15 @@ export abstract class ClaireValidator extends ClaireMiddleware {
           ).toResponse();
         }
       }
+
+      // all checks passed — keep this field
+      if (value !== undefined) validated[key] = value;
     }
     // empty the patch guard
     if (isPartial && Object.keys(validated).length === 0) {
-      return new ClaireException(400,
-        'Validation failed!: at least one field is required'
+      return new ClaireException(
+        400,
+        "Validation failed!: at least one field is required",
       ).toResponse();
     }
 
