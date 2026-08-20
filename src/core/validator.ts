@@ -144,6 +144,8 @@ export abstract class ClaireValidator extends ClaireMiddleware {
     for (const key in schema) {
       const rule = schema[key];
 
+      if (!rule || rule.immutable) continue; // excluded from partial mode
+
       if (rule) result[key] = { ...rule, required: false };
     }
     return result;
