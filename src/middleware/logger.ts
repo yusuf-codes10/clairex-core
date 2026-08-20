@@ -2,6 +2,17 @@ import type { ClaireContext } from "../core/context";
 import { ClaireMiddleware } from "../core/middleware";
 import { colorMethod } from "../core/utils";
 
+/**
+ * Request logger. Prints the method and URL on the way in, and again on the way
+ * out with the elapsed time.
+ *
+ * Auto-registered as the first global middleware by the ClaireX constructor —
+ * every app logs by default with no setup.
+ *
+ * @example
+ * // → GET http://localhost:3000/users
+ * // ← GET http://localhost:3000/users 2.34ms
+ */
 export class ClaireLogger extends ClaireMiddleware {
     private start: number = 0;
 

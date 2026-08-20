@@ -1,3 +1,14 @@
+/**
+ * Wraps the native Request with typed accessors for params, query, headers and body.
+ * Accessed via `c.request` inside a handler — never constructed directly.
+ *
+ * @example
+ * private getUser(c: ClaireContext): Response {
+ *     const { id } = c.request.params;
+ *     const token = c.request.headers.get('authorization');
+ *     return c.response.json({ id, token });
+ * }
+ */
 export class ClaireRequest {
   private raw: Request;
   private _params: Record<string, string>;
@@ -68,14 +79,41 @@ export class ClaireRequest {
     return result;
   }
 
+  /**
+   * Returns the full parsed URL of the request.
+   *
+   * @returns A native URL object.
+   *
+   * @example
+   * // Request: http://localhost:3000/users?page=2
+   * c.request.url.origin   // "http://localhost:3000"
+   * c.request.url.search   // "?page=2"
+   */
   get url(): URL {
     return this._url;
   }
 
+  /**
+   * Returns the path portion of the request URL, without query string.
+   *
+   * @returns The URL pathname.
+   *
+   * @example
+   * // Request: /users/123?page=2
+   * c.request.pathname // "/users/123"
+   */
   get pathname(): string {
     return this._url.pathname;
   }
 
+  /**
+   * Returns the HTTP method of the request, uppercased.
+   *
+   * @returns The HTTP method (GET, POST, PUT, PATCH, DELETE).
+   *
+   * @example
+   * if (c.request.method === 'POST') { ... }
+   */
   get method(): string {
     return this._method;
   }

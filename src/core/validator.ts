@@ -43,6 +43,17 @@ export abstract class ClaireValidator extends ClaireMiddleware {
    */
   abstract rules(): ValidationSchema;
 
+  /**
+   * @internal
+   * Runs the validation engine. Called by the framework as route-level middleware.
+   *
+   * Bodyless methods (GET, DELETE, HEAD, OPTIONS) are skipped. POST and PUT are
+   * validated against the full schema; PATCH is validated against `partial(rules())`.
+   * On success the pruned body and the partial flag are stored on the context.
+   *
+   * @param c - The request context.
+   * @returns void to continue, or a 400 Response to short-circuit on the first failure.
+   */
   override async before(c: ClaireContext): Promise<void | Response> {
     const method: string = c.request.method.toUpperCase();
 
@@ -152,6 +163,16 @@ export abstract class ClaireValidator extends ClaireMiddleware {
     c.body = validated;
   }
 
+  /**
+   * Returns a partial copy of a schema — every rule keeps its type, min and max,
+   * but `required` becomes false. Fields flagged `immutable` are excluded entirely.
+   *
+   * The runtime counterpart to TypeScript's `Partial<T>`. Applied automatically to
+   * PATCH requests; `protected` so a subclass can opt into explicit control.
+   *
+   * @param schema - The canonical schema returned by `rules()`.
+   * @returns A schema with no required fields and immutable fields removed.
+   */
   protected partial(schema: ValidationSchema): ValidationSchema {
     const result: ValidationSchema = {};
     for (const key in schema) {

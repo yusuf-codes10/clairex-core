@@ -10,13 +10,19 @@ import { ClaireValidator } from "./validator";
 /**
  * The main application class for ClaireX.
  * Uses composition — owns a ClaireRouter internally for route storage.
- * Create an instance, mount your keys, register global middleware, and call listen().
+ *
+ * Three methods only: `unlock()` to mount a resource, `use()` to add global
+ * middleware, `listen()` to start the server. Routes are never defined here —
+ * they live on ClaireKey.
+ *
+ * `unlock()` and `use()` return `this`, so calls can be chained.
  *
  * @example
- * const app = new ClaireX(3000);
- * app.mount(new UserKey());
- * app.use(new AuthGuard());
- * app.listen();
+ * new ClaireX(3000)
+ *     .unlock(new UserKey())
+ *     .unlock(new PostKey())
+ *     .use(new ClaireCors('*'))
+ *     .listen();
  */
 export class ClaireX {
   private port;
@@ -43,6 +49,8 @@ export class ClaireX {
    * Order matters — middlewares execute in the order they are registered.
    *
    * @param middleware - An instance of a class extending ClaireMiddleware.
+   * @returns The application instance, for chaining.
+   * @throws ClaireException 500 if a ClaireValidator is passed — validators are route-level only.
    *
    * @example
    * app.use(new AuthGuard());
@@ -64,6 +72,7 @@ export class ClaireX {
    * A key grants access to its routes, handlers, and scoped middlewares.
    *
    * @param key - An instance of a class extending ClaireKey.
+   * @returns The application instance, for chaining.
    *
    * @example
    * app.unlock(new UserKey());

@@ -27,6 +27,20 @@ export abstract class ClaireKey {
   // each Key has its own middleware chain
   private _middlewareChain?: ClaireMiddleware[] = [];
 
+  /**
+   * Creates a key for one resource. Call via `super()` from your subclass.
+   * `register()` is invoked automatically once the prefix is set, so routes
+   * exist the moment the key is instantiated.
+   *
+   * @param prefix - Path prefix applied to every route on this key (e.g. `/users`).
+   * @param middlewares - Optional middlewares scoped to all routes on this key.
+   * @throws ClaireException 500 if a ClaireValidator is passed — validators are route-level only.
+   *
+   * @example
+   * constructor() {
+   *     super('/users', [new AuthGuard()]);
+   * }
+   */
   constructor(prefix: string, middlewares: ClaireMiddleware[] = []) {
     for (const mw of middlewares) {
           if (mw instanceof ClaireValidator) {
@@ -77,10 +91,18 @@ export abstract class ClaireKey {
     });
   }
 
+  /**
+   * @internal
+   * Exposes this key's registered routes. Read by `ClaireX.unlock()` when mounting.
+   */
   get router(): RouterEntry[] {
     return this._router.routes;
   }
 
+  /**
+   * @internal
+   * Exposes this key's scoped middleware chain. Read by `ClaireX.unlock()` when mounting.
+   */
   get middlewares(): ClaireMiddleware[] | undefined {
     return this._middlewareChain;
   }

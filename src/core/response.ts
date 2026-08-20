@@ -1,3 +1,12 @@
+/**
+ * Response builder. Every method returns a native Response ready to hand back to Bun.
+ * Accessed via `c.response` inside a handler — never constructed directly.
+ *
+ * @example
+ * return c.response.json({ users });
+ * return c.response.text('OK');
+ * return c.response.redirect('/login');
+ */
 export class ClaireResponse {
   private _status: number;
 
@@ -82,6 +91,16 @@ export class ClaireResponse {
     });
   }
 
+  /**
+   * Returns the status code of the most recently built response.
+   * Read-only — set it by passing a status to `json()`, `text()`, `html()` or `redirect()`.
+   *
+   * @returns The current HTTP status code.
+   *
+   * @example
+   * c.response.json({ error: 'Not found' }, 404);
+   * c.response.status // 404
+   */
   get status (): number {
     return this._status;
   }

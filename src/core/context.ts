@@ -2,6 +2,19 @@ import { ClaireRequest } from "./request";
 import { ClaireResponse } from "./response";
 import { ClaireException } from "./exception";
 
+/**
+ * Per-request context, created fresh for every incoming request.
+ * Composition of ClaireRequest and ClaireResponse, plus storage for data
+ * written by middleware and read by the handler (validated body, auth payload).
+ *
+ * Passed as the single argument to every route handler.
+ *
+ * @example
+ * private getUsers(c: ClaireContext): Response {
+ *     const { id } = c.request.params;
+ *     return c.response.json(users);
+ * }
+ */
 export class ClaireContext {
   // composition of both ClaireRouter & ClaireResponse here
   public request: ClaireRequest;
@@ -16,10 +29,21 @@ export class ClaireContext {
     this.response = new ClaireResponse();
   }
 
+  /**
+   * @internal
+   * Stores the validated request body. Called by ClaireValidator after all rules pass.
+   * Contains only fields declared in the schema — unknown keys are stripped.
+   */
   set body(data: unknown) {
     this._valid = data;
   }
 
+  /**
+   * @internal
+   * Marks whether the validated body is partial (PATCH) or full (POST/PUT).
+   * Called by ClaireValidator. Determines whether the handler must read via
+   * `valid<T>()` or `patched<T>()`.
+   */
   set partial(flag: boolean) {
     this._partial = flag;
   }
@@ -28,8 +52,13 @@ export class ClaireContext {
    * Returns the validated request body as a typed object.
    * Must be used after a ClaireValidator middleware has run on the route.
    *
+   * For full-body methods only (POST, PUT). On a PATCH route the body is
+   * partial — use `patched<T>()` instead.
+   *
    * @template T - The expected type of the validated body.
-   * @returns The validated body cast to type T.
+   * @returns The validated body cast to type T. Every field is guaranteed present.
+   * @throws ClaireException 500 if the body was partial (wrong accessor for a PATCH route).
+   * @throws ClaireException 500 if no validated body exists (missing ClaireValidator).
    *
    * @example
    * const user = c.valid<User>();
@@ -56,7 +85,25 @@ export class ClaireContext {
     return this._valid as T;
   }
 
-  // patched
+  /**
+   * Returns the validated PATCH body as a partial object.
+   * Must be used after a ClaireValidator middleware has run on a PATCH route.
+   *
+   * Returns `Partial<T>` rather than `T` — on PATCH only the fields the client
+   * actually sent are validated and stored, so every property is optional.
+   * TypeScript therefore forces you to check each field before using it, which
+   * prevents accidentally overwriting stored values with `undefined`.
+   *
+   * @template T - The full resource type. The return type is narrowed to Partial<T>.
+   * @returns The validated body cast to Partial<T>. Fields may be absent.
+   * @throws ClaireException 500 if the body was full (use `valid<T>()` on POST/PUT routes).
+   *
+   * @example
+   * const patch = c.patched<User>();
+   *
+   * if (patch.name !== undefined) foundUser.name = patch.name;
+   * if (patch.age  !== undefined) foundUser.age  = patch.age;
+   */
   patched<T>(): Partial<T> {
     if (!this._partial) {
       throw new ClaireException(500, 'This route received a full body. Use c.valid<T>() instead.');

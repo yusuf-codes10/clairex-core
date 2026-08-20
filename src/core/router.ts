@@ -1,5 +1,12 @@
 import type { RouterEntry, ClaireHandler } from "./types";
 
+/**
+ * @internal
+ * Route storage. Used internally by ClaireX (for the matched route table) and by
+ * ClaireKey (for per-resource registration).
+ *
+ * Not part of the public API — define routes with `this.routes()` inside a ClaireKey.
+ */
 export class ClaireRouter {
   protected _routes: RouterEntry[] = [];
 
@@ -27,6 +34,10 @@ export class ClaireRouter {
     this.register("DELETE", path, handler);
   }
 
+  /**
+   * @internal
+   * Exposes the flat array of registered routes.
+   */
   get routes(): RouterEntry[] {
     return this._routes;
   }

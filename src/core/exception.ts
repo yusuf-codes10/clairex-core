@@ -17,6 +17,17 @@ export class ClaireException extends Error {
     private _content: string;
     private _metadata?: Record<string, string>;
 
+    /**
+     * Creates a typed exception.
+     *
+     * @param statusCode - The HTTP status code to respond with.
+     * @param content - The error message, sent to the client and used as the Error message.
+     * @param metadata - Optional extra detail (validation errors, debug info).
+     *
+     * @example
+     * throw new ClaireException(404, 'User not found');
+     * throw new ClaireException(400, 'Invalid input', { field: 'email' });
+     */
     constructor (statusCode: number, content: string, metadata?: Record<string, string>) {
         super(content);
         this._statusCode = statusCode;
@@ -25,14 +36,29 @@ export class ClaireException extends Error {
         this._metadata = metadata;
     }
 
+    /**
+     * Returns the HTTP status code carried by this exception.
+     *
+     * @returns The status code.
+     */
     get statusCode(): number {
         return this._statusCode;
     }
 
+    /**
+     * Returns the error message carried by this exception.
+     *
+     * @returns The error content.
+     */
     get content(): string {
         return this._content;
     }
 
+    /**
+     * Returns the optional metadata attached to this exception.
+     *
+     * @returns The metadata, or undefined if none was provided.
+     */
     get metadata(): Record<string, string> | undefined {
         return this._metadata;
     }

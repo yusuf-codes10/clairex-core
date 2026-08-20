@@ -1,12 +1,38 @@
 import type { ClaireContext } from "../core/context";
 import { ClaireMiddleware } from "../core/middleware";
 
+/**
+ * CORS middleware. Answers the browser's preflight `OPTIONS` request and adds
+ * CORS headers to every response.
+ *
+ * Register globally — CORS is not a per-route concern. You never need to define
+ * an `OPTIONS` route yourself; this middleware short-circuits those requests.
+ *
+ * @example
+ * app.use(new ClaireCors(
+ *     'https://myapp.com',
+ *     ['Content-Type', 'Authorization'],
+ *     ['GET', 'POST', 'PATCH', 'DELETE'],
+ *     ['X-Total-Count']
+ * ));
+ */
 export class ClaireCors extends ClaireMiddleware {
   private _origin: string;
   private _allowedHeaders: string[];
   private _allowedMethods: string[];
   private _exposeHeaders: string[];
 
+  /**
+   * Creates the CORS middleware.
+   *
+   * @param origin - Value for `Access-Control-Allow-Origin` (e.g. `'*'` or a specific origin).
+   * @param allowedHeaders - Headers the client is permitted to send.
+   * @param allowedMethods - HTTP methods the client is permitted to use.
+   * @param exposeHeaders - Response headers the client is permitted to read.
+   *
+   * @example
+   * new ClaireCors('*', ['Content-Type'], ['GET', 'POST'], []);
+   */
   constructor(
     origin: string,
     allowedHeaders: string[],
