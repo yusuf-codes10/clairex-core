@@ -47,6 +47,10 @@ export abstract class ClaireValidator extends ClaireMiddleware {
     const body = (await c.request.json()) as Record<string, unknown>;
     const schema = this.rules();
 
+    const method: string = c.request.method.toUpperCase();
+
+    if (method === 'GET' || method === 'DELETE' || method === 'HEAD' || method === 'OPTIONS') return;
+
     // check body against this.rules()
     // if invalid → throw ValidationException
     // if valid → store typed data somewhere
