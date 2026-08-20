@@ -1283,10 +1283,12 @@ function resolveClaireModule(typescript: typeof ts, moduleName: string, containi
 
 ---
 
-### Task 44: VS Code Extension — clairex-vscode ⬜
+### Task 44: VS Code Extension — clairex-vscode ✅ SUPERSEDED BY TASK 48
 **Relates to:** Task 43 (TypeScript plugin), Task 40 (.claire extension)
 **Dependencies:** Task 43
-**Status:** Pending — next step after Task 43
+**Status:** Built as planned, then revised — see Task 48
+
+> **Note:** this task was implemented as written, but the plan below turned out to be wrong in one important way: registering `.claire` as its own language ID *prevented* TypeScript from providing language features. Task 48 documents the correction. Kept here for the design trail.
 
 **What this is:**
 A VS Code extension that wraps the existing `@clairex/typescript-plugin` and provides zero-config `.claire` file support. Currently, users need to manually configure `.vscode/settings.json`, `tsconfig.json`, and select workspace TypeScript. The extension eliminates all manual setup.
@@ -1318,6 +1320,338 @@ A VS Code extension that wraps the existing `@clairex/typescript-plugin` and pro
 4. No `.vscode/settings.json` edits, no `tsconfig.json` plugin entry needed
 
 **Done when:** Extension installable via `.vsix`, `.claire` files have their own icon, imports resolve without manual config.
+
+---
+
+### Task 45: ClaireValidator — One Validator Per Resource ✅
+**Commits:** `7254a61`, `929af7c`, `d66e897`, `4f8f8c4`, `829c399`, `8ce11ad`
+**Relates to:** US-4 (Built-in Validation)
+
+**The problem this solves:**
+The original design required **one validator class per action**. A resource with POST, PUT, and PATCH needed three validator files. Scale that to a 10-resource API and you have ~30 validator classes:
+
+```
+validators/
+└── users/
+    ├── postValidator.claire      ← create shape
+    ├── patchValidator.claire     ← update shape
+    └── putValidator.claire       ← replace shape
+```
+
+That is not solving the problem ClaireX set out to solve — it is Zod's schema-per-action model rewritten as classes. More ceremony, same file explosion.
+
+**The insight:**
+**PATCH is a partial of POST.** That is not a ClaireX convention — it is REST semantics. The *shape* does not change per action, only the *required* enforcement does. So one schema per resource is enough; the framework adjusts enforcement based on the HTTP method.
+
+**What was done:**
+- `ClaireValidator.before()` now reads `c.request.method` and picks the schema accordingly
+- Added `protected partial(schema: ValidationSchema): ValidationSchema` — clones the schema with `required: false` on every rule
+- Bodyless methods (`GET`, `DELETE`, `HEAD`, `OPTIONS`) return early — `c.request.json()` is never called on a request with no body
+- `validated` object built from schema keys only — unknown fields are stripped, not passed through
+- Empty PATCH guard — a PATCH with no recognised fields returns 400 instead of silently doing nothing
+
+**Enforcement per method:**
+
+| Method | Schema used | `required` enforced? |
+|--------|-------------|---------------------|
+| POST | `rules()` | ✅ yes |
+| PUT | `rules()` | ✅ yes (full replacement) |
+| PATCH | `partial(rules())` | ❌ no — but type/min/max still checked on present fields |
+| GET / DELETE / HEAD / OPTIONS | none — early return | n/a |
+
+**Result — one file per resource:**
+
+```
+validators/
+└── user.validator.ts     ← one file, all actions
+```
+
+```typescript
+export class userValidator extends ClaireValidator {
+  override rules(): ValidationSchema {
+    return {
+      id:   { type: "number", required: true },
+      name: { type: "string", required: true, min: 3 },
+      age:  { type: "number", required: true, min: 18, immutable: true },
+    };
+  }
+}
+```
+
+The same instance attaches to every route on the resource:
+
+```typescript
+register(): void {
+    this.routes('get',   '/',    this.getUsers);
+    this.routes('post',  '/',    this.createUser,     [new userValidator()]);
+    this.routes('get',   '/:id', this.getUserById);
+    this.routes('patch', '/:id', this.updateUserName, [new userValidator()]);
+}
+```
+
+**Behaviour:**
+
+| Request | Body | Result |
+|---------|------|--------|
+| `POST /users` | `{ id: 4, name: "Ada", age: 30 }` | ✅ passes |
+| `POST /users` | `{ name: "Ada" }` | ❌ 400 — `id is required!` |
+| `PATCH /users/1` | `{ name: "Ada" }` | ✅ passes — partial mode |
+| `PATCH /users/1` | `{ name: "ab" }` | ❌ 400 — `min` still enforced |
+| `PATCH /users/1` | `{}` | ❌ 400 — at least one field required |
+| `PATCH /users/1` | `{ name: "Ada", isAdmin: true }` | ✅ passes — `isAdmin` stripped |
+
+**Design decisions:**
+- **Convention over configuration, deliberately.** ClaireX is opinionated: PATCH means partial. The alternative — `onPost()` / `onPatch()` / `onPut()` override hooks — was considered and rejected as speculative. It shifts a decision onto the user that the framework can make correctly 95% of the time. `partial()` stays `protected` so a subclass can still opt into explicit control if the need appears.
+- **`partial()` mirrors TypeScript's `Partial<T>` by name** — runtime transform and compile-time transform sharing one word makes the mental model obvious.
+- **Pruning to schema keys is a security fix, not just tidiness.** Previously `c.body = body` stored the *raw* parsed body, so `{ name: "x", isAdmin: true }` delivered `isAdmin` to the handler wearing a validated type. Unvalidated data must never reach `c.valid<T>()`.
+- **Bodyless early return makes the validator safe by construction** rather than relying on the Task 29 placement guard.
+
+**Trade-off accepted:** "PATCH is a partial of your schema" is invisible at the call site. A user who does not know the convention will be surprised the first time a `required` field is not enforced on PATCH. This is documented prominently rather than solved with configuration — and Task 46 removes the dangerous half of that surprise.
+
+---
+
+### Task 46: ClaireContext — `patched<T>()` and the Silent PATCH Bug ✅
+**Commits:** `f940e3c`, `b931988`, `bf90358`, `6141aa7`, `7eec122`, `3dd97d7`
+**Relates to:** Task 45, US-3 (Typed Request Context)
+
+**The bug that motivated this:**
+Task 45 made PATCH store only the fields that were sent. But the handler was still reading with `c.valid<User>()`:
+
+```typescript
+private updateUserName(c: ClaireContext): Response {
+    const { name } = c.valid<User>();   // ← claims name is always a string
+    ...
+    foundUser.name = name;              // ← assigns unconditionally
+}
+```
+
+`PATCH { age: 30 }` → `name` is `undefined` → `foundUser.name = undefined` **erased the stored name.** No exception, no warning, no log. Data loss that compiles cleanly.
+
+The root cause is a **type lie**: `c.valid<User>()` promised a full `User`, the runtime delivered a partial one, and TypeScript had no way to know. And it could not know — the generic is supplied by the user, so the framework could not stop them declaring the wrong thing.
+
+**The fix — make the wrong thing inexpressible:**
+
+Two accessors, each with a return type the framework controls:
+
+```typescript
+valid<T>(): T              // full body — POST / PUT
+patched<T>(): Partial<T>   // partial body — PATCH
+```
+
+The asymmetry is the whole mechanism. The user passes `User`; `patched()` hands back `Partial<User>`. They **cannot** widen it. So this now fails to compile:
+
+```typescript
+const patch = c.patched<User>();
+foundUser.name = patch.name;
+// ❌ Type 'string | undefined' is not assignable to type 'string'
+```
+
+**Plus a runtime guard so the pair cannot be mismatched:**
+
+`ClaireContext` tracks the mode, set by the validator alongside the body:
+
+```typescript
+private _partial: boolean = false;
+set partial(flag: boolean) { this._partial = flag; }
+```
+
+```typescript
+valid<T>(): T {
+    if (this._partial) {
+        throw new ClaireException(500,
+            'This route received a partial body (PATCH). Use c.patched<T>() instead.');
+    }
+    // ...existing "no validated body" check
+}
+
+patched<T>(): Partial<T> {
+    if (!this._partial) {
+        throw new ClaireException(500,
+            'This route received a full body. Use c.valid<T>() instead.');
+    }
+    return this._valid as Partial<T>;
+}
+```
+
+**Why `patched<T>()` is different from `valid<T>()`:**
+
+| | `valid<T>()` | `patched<T>()` |
+|---|---|---|
+| Returns | `T` — every field guaranteed present | `Partial<T>` — every field optional |
+| Valid on | POST, PUT | PATCH |
+| Runtime guard | throws if the body was partial | throws if the body was full |
+| Handler must | use fields directly | check `!== undefined` before assigning |
+| Prevents | missing validator | **silent field erasure** |
+
+**Correct handler:**
+
+```typescript
+private updateUserName(c: ClaireContext): Response {
+    const { id } = c.request.params;
+    const patch = c.patched<User>();          // Partial<User>
+
+    const foundUser = users.find(u => u.id === Number(id));
+    if (!foundUser) return new ClaireException(404, 'user not found!').toResponse();
+
+    if (patch.name !== undefined) foundUser.name = patch.name;
+    if (patch.age  !== undefined) foundUser.age  = patch.age;
+
+    return c.response.json(users);
+}
+```
+
+Note the object is **not** destructured up front — destructuring discards the "was it present?" information the guards depend on.
+
+**Every failure mode is now loud:**
+
+| Mistake | Caught by | When |
+|---------|-----------|------|
+| `c.valid<T>()` on a PATCH route | runtime guard, with a hint naming the fix | first request |
+| `c.patched<T>()` on a POST route | runtime guard, with a hint naming the fix | first request |
+| Unguarded assignment from a partial | TypeScript (`string \| undefined`) | as you type |
+| No validator attached | existing empty-body check | first request |
+
+**Design decisions:**
+- **The compile error is the product.** `Type 'string | undefined' is not assignable to type 'string'` is not friction — it is the framework catching data loss before the code runs.
+- **Rejected a `Proxy`-based runtime guard** that would throw on reading an unvalidated key. It breaks the legitimate `if (patch.name !== undefined)` pattern and would have required a parallel `c.has()` API to work around ClaireX's own guard. The type signature already solves it.
+- **Naming:** `patched<T>()` over `partial<T>()` — `partial` was already taken by the validator's schema transform, and reusing it across two layers with different meanings would confuse more than the symmetry helped.
+- Follows the established ClaireX pattern: middleware writes, handler reads, guard throws with a hint if the pairing is wrong — same as `c.valid<T>()` (Task 30) and `c.auth<T>()` (Task 33).
+
+**Future candidate — Rule 5 for the `.claire` plugin:** *`c.valid<T>()` in a handler registered on a PATCH route is a violation.* Both the route registration and the handler live in the same file, so it is the same correlation technique Rule 3 needs. That would move this from a runtime guard to a load-time rejection.
+
+---
+
+### Task 47: ValidationRule — `immutable` Flag ✅
+**Commits:** `10dea91`, `28d015b`, `6f95b24`
+**Relates to:** Task 45
+
+**The problem:**
+With one schema per resource, every field became patchable. `id` is declared `required: true` for POST — which meant PATCH accepted it too, so a client could send `{ id: 999 }` and rewrite the primary key. Nothing stopped it except handler discipline (the handler simply never assigned `id`), which is implicit safety that a future edit could quietly remove.
+
+**What was done:**
+- Added `immutable?: boolean` to `ValidationRule`
+- `partial()` skips immutable fields entirely — they never enter the PATCH schema, so they can never reach `validated`
+- `before()` **rejects** the request if an immutable field is present in a PATCH body, rather than silently dropping it
+
+```typescript
+protected partial(schema: ValidationSchema): ValidationSchema {
+    const result: ValidationSchema = {};
+    for (const key in schema) {
+        const rule = schema[key];
+        if (!rule || rule.immutable) continue;   // excluded from partial mode
+        result[key] = { ...rule, required: false };
+    }
+    return result;
+}
+```
+
+```typescript
+// immutable fields cannot be sent on PATCH — checked before any other rule
+if (isPartial) {
+    const full: ValidationSchema = this.rules();
+    for (const key in full) {
+        if (full[key]?.immutable && body[key] !== undefined) {
+            return new ClaireException(400,
+                `Validation failed!: "${key}" cannot be updated`).toResponse();
+        }
+    }
+}
+```
+
+**Usage:**
+```typescript
+override rules(): ValidationSchema {
+    return {
+        id:   { type: "number", required: true },
+        name: { type: "string", required: true, min: 3 },
+        age:  { type: "number", required: true, min: 18, immutable: true },
+    };
+}
+```
+
+`age` is required on create and rejected on update.
+
+**Design decisions:**
+- **Reject, do not drop.** Silently ignoring a field the client explicitly sent is exactly the kind of quiet behaviour ClaireX avoids elsewhere. A 400 tells the client they did something wrong.
+- **Checked first, before type/min/max.** Order of priority: *are you allowed to touch this field?* → *is the value valid?* → *did you send anything at all?* Validating an immutable field's type before rejecting it would be wasted work and a confusing error message.
+- **The check reads `this.rules()`, not `schema`** — immutable keys have already been stripped from the partial schema, so the original is needed to know what to look for.
+- **`immutable?` is optional with no default.** `undefined` is falsy, so an absent flag means mutable. Consistent with `required?`, `min?`, `max?` — you write it only when you mean it. Writing `immutable: false` everywhere would be noise.
+
+---
+
+### Task 48: VS Code Extension — `.claire` as First-Class TypeScript ✅
+**Commits:** `eafc4c2`, `d4512ff`, `c2fa151`, `463ec27`
+**Relates to:** Task 44, Task 43
+
+**The problem:**
+The extension registered `.claire` as its own language ID:
+
+```json
+"languages": [{ "id": "claire", "extensions": [".claire"], ... }],
+"grammars":  [{ "language": "claire", "scopeName": "source.claire", ... }]
+```
+
+Its grammar inherited `source.ts`, so syntax highlighting worked — but **that was all.** VS Code's built-in TypeScript extension only provides language features for documents whose language is `typescript`/`javascript`. A custom language ID excluded `.claire` from every one of them: no IntelliSense inside the file, no hover types, no go-to-definition, no rename, no quick fixes, no formatting.
+
+Imports resolved (that happens inside the TypeScript program, driven by other files) but the editing experience was hollow.
+
+**The realisation:** you cannot have both a custom language ID *and* full TypeScript features. They are mutually exclusive. Since a `.claire` file **is** TypeScript, TypeScript should own it.
+
+**What was done:**
+- Removed `contributes.languages` — nothing competes with TypeScript for `.claire` documents any more
+- Removed `contributes.grammars` — TypeScript's own grammar handles highlighting
+- Removed `contributes.iconThemes` — replaced by a Material Icon Theme clone (see below)
+- Added `contributes.configurationDefaults` — ships the required settings so users configure nothing
+- `contributes.snippets` language changed from `claire` to `typescript`
+- Removed `main` and the build step — every remaining contribution is declarative, so the extension needs no JavaScript entry point and no `activationEvents`
+
+```json
+"contributes": {
+    "typescriptServerPlugins": [
+        { "name": "@clairex/typescript-plugin", "enableForWorkspaceTypeScriptVersions": true }
+    ],
+    "configurationDefaults": {
+        "files.associations": { "*.claire": "typescript" },
+        "material-icon-theme.files.customClones": [
+            { "name": "claire", "base": "typescript", "color": "#722f37", "fileExtensions": ["claire"] }
+        ]
+    },
+    "snippets": [
+        { "language": "typescript", "path": "./snippets/claire.json" }
+    ]
+}
+```
+
+**Before vs after:**
+
+| Feature | Custom language ID | `.claire` as TypeScript |
+|---------|-------------------|------------------------|
+| Syntax highlighting | ✅ (inherited grammar) | ✅ (TypeScript's own) |
+| `.claire` import resolution | ✅ (TS plugin) | ✅ (TS plugin) |
+| IntelliSense / autocomplete | ❌ | ✅ |
+| Hover types | ❌ | ✅ |
+| Go to definition / rename | ❌ | ✅ |
+| Quick fixes / refactors | ❌ | ✅ |
+| Formatting | ❌ | ✅ |
+| Custom file icon | ✅ (own icon theme) | ✅ (Material clone) |
+| User configuration required | some | **none** |
+
+**On the icon — a genuine VS Code limitation:**
+There is no API to add a single file icon to an existing icon theme. Shipping `iconThemes` meant users had to *switch* to "ClaireX Icons", losing their own theme — and since the theme defined only `.claire`, every other file rendered blank. The workaround is a Material Icon Theme clone: a wine-coloured (`#722f37`) TypeScript icon mapped to `.claire`, shipped via `configurationDefaults` so it applies automatically without replacing anyone's theme. It also matches the wine terminal banner, giving ClaireX one consistent colour identity across editor and console.
+
+**Design decisions:**
+- **`configurationDefaults` over documentation.** Settings the extension can apply itself should never be the user's job. Users can still override them.
+- **Declarative over programmatic.** With no `main`, there is no bundle to build, no activation lifecycle, and one less thing to break on repackage.
+- **Convention accepted:** `.claire` files are TypeScript to the editor, and ClaireX's extra rules are enforced by the Bun loader at run time (Task 40). Two enforcement layers, one language.
+
+**Packaging notes (hard-won):**
+- `vsce` walks up into the monorepo root because of `"workspaces"` in the root `package.json`, pulling in ~1700 unrelated files and failing on `extension/../../tsconfig.json`. Workaround: copy the extension folder outside the repo and package from there.
+- The `@clairex/typescript-plugin` dependency must be hand-staged into `node_modules/` before packaging — a `workspace:*` spec makes `npm list` (which `vsce` runs) fail.
+- **An installed extension ships its own frozen copy of the TypeScript plugin.** Rebuilding the plugin locally has no effect until the extension is repackaged and reinstalled. For plugin development, uninstall the extension and load the plugin via a `tsconfig.json` `plugins` entry instead — the inner loop is then just rebuild + restart TS Server.
+- TypeScript rejects **relative paths** in `compilerOptions.plugins` — a plugin must be referenced by package name and be resolvable from `node_modules`.
+- VS Code must use the **workspace** TypeScript (`typescript.tsdk`, or "TypeScript: Select TypeScript Version → Use Workspace Version") for a project-local plugin to load at all. Its bundled TypeScript never searches the project's `node_modules`.
+
+**Result:** `.claire` files behave exactly like `.ts` files in the editor, with a distinct wine icon, and every ClaireX-specific rule still enforced at load time. Zero configuration — no `.vscode/settings.json`, no `tsconfig.json` plugin entry.
 
 ---
 
@@ -1368,4 +1702,8 @@ A VS Code extension that wraps the existing `@clairex/typescript-plugin` and pro
 | 41 | CLI Scaffolding — create-clairex | ⬜ Pending |
 | 42 | Documentation & Submission | ⬜ Final |
 | 43 | @clairex/typescript-plugin — Import Resolution | ✅ Done (solves Problem 5) |
-| 44 | VS Code Extension — clairex-vscode | ⬜ Pending |
+| 44 | VS Code Extension — clairex-vscode | ✅ Superseded by Task 48 |
+| 45 | ClaireValidator — One Validator Per Resource | ✅ Done |
+| 46 | ClaireContext — `patched<T>()` & Silent PATCH Bug | ✅ Done |
+| 47 | ValidationRule — `immutable` Flag | ✅ Done |
+| 48 | VS Code Extension — .claire as First-Class TypeScript | ✅ Done |
