@@ -44,6 +44,11 @@ export class ClaireContext {
     return this._valid as T;
   }
 
+  // patched
+  patched<T>(): T {
+    return '' as T;
+  }
+
   /**
    * Returns the authenticated user's token payload as a typed object.
    * Must be used after a ClaireJWT middleware has run on the route.
