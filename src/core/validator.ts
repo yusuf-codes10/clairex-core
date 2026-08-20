@@ -1,3 +1,4 @@
+import { validate } from "../plugin/claire-loader";
 import type { ClaireContext } from "./context";
 import { ClaireException } from "./exception";
 import { ClaireMiddleware } from "./middleware";
@@ -52,6 +53,8 @@ export abstract class ClaireValidator extends ClaireMiddleware {
     const schema: ValidationSchema = isPartial ? this.partial(this.rules()) : this.rules();
 
     const body = (await c.request.json()) as Record<string, unknown>;
+
+    const validated: Record<string, unknown> = {};
 
     // check body against this.rules()
     // if invalid → throw ValidationException
@@ -113,8 +116,15 @@ export abstract class ClaireValidator extends ClaireMiddleware {
         }
       }
     }
+    // empty the patch guard
+    if (isPartial && Object.keys(validated).length === 0) {
+      return new ClaireException(400,
+        'Validation failed!: at least one field is required'
+      ).toResponse();
+    }
+
     //   store validated body somewhere
-    c.body = body;
+    c.body = validated;
   }
 
   protected partial(schema: ValidationSchema): ValidationSchema {
