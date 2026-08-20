@@ -20,6 +20,7 @@ export type ValidationRule = {
   required?: boolean;
   min?: number;
   max?: number;
+  immutable?: boolean;
 };
 
 export type ValidationSchema = Record<string, ValidationRule>;

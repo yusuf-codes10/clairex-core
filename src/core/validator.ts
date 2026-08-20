@@ -1,4 +1,3 @@
-import { validate } from "../plugin/claire-loader";
 import type { ClaireContext } from "./context";
 import { ClaireException } from "./exception";
 import { ClaireMiddleware } from "./middleware";
