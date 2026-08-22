@@ -133,6 +133,25 @@ The clearest example is **Task 46**, which documents a data-loss bug found mid-b
 
 **Test credentials**: none required.
 
+## Editor Support (Optional)
+
+ClaireX ships a **VS Code extension** that teaches the editor about `.claire`
+files, it resolves `.claire` imports and gives them full TypeScript language
+support (autocomplete, go-to-definition, inline errors).
+
+This is optional. `.claire` files run correctly without it; only the editing
+experience changes.
+
+The extension is bundled in this repo as a `.vsix`. From a clone of
+`clairex-core`:
+
+```bash
+code --install-extension packages/vscode-extension/clairex-vscode-0.1.0.vsix
+```
+If the code command isn't on your PATH, install it through the VS Code UI instead: Extensions → ⋯ → Install from VSIX… and select the file above.
+
+Then reload VS Code.
+
 ## Author
 
 [Yusuf Codes10](!https://github.com/yusuf-codes10)
