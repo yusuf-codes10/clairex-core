@@ -1110,7 +1110,8 @@ Bun treats it as TypeScript from here on
 
 ---
 
-### Task 41: CLI Scaffolding — create-clairex
+### Task 41: CLI Scaffolding — create-clairex ✅
+**Commits:** `c46719c`
 **Relates to:** DX, hackathon impact
 
 **What to do:**
@@ -1121,9 +1122,26 @@ Bun treats it as TypeScript from here on
 
 **Done when:** Judges can `bun create clairex my-app` and have a working project immediately.
 
+**Delivered:** `create-clairex` published to npm and working — `bun create clairex my-app`
+scaffolds a running project.
+
+The template shipped differs from the plan above, deliberately:
+
+| Planned | Shipped | Why |
+|---|---|---|
+| `app.ts` | `src/index.ts` | matches the docs and the `dev` script |
+| `middlewares/` | omitted | the template demonstrates one resource; an empty folder teaches nothing |
+| — | `src/types/user.ts` | the type is half the story — `valid<T>()` needs something to be generic over |
+| — | `bunfig.toml` | the `.claire` loader is required, so it cannot be left to the user |
+
+Final template: `bunfig.toml`, `tsconfig.json`, `package.json`, `README.md`, `_gitignore`,
+and `src/` containing `index.ts`, `types/user.ts`, `keys/user.key.claire`,
+`validators/user.validator.claire`. Every `.claire` file in the template passes the
+loader's own rules.
+
 ---
 
-### Task 42: Documentation & Hackathon Submission
+### Task 42: Documentation & Hackathon Submission ⚠️ ONE ITEM OUTSTANDING
 **Relates to:** Hackathon requirements  
 **Dependencies:** All previous tasks
 
@@ -1134,6 +1152,19 @@ Bun treats it as TypeScript from here on
 - Demo video showing ClaireX in action + Kiro spec-driven process
 
 **Done when:** A judge can clone, install, run, and understand the project from the README alone.
+
+**Delivered:**
+
+| Item | Status |
+|---|---|
+| README covering all nine required submission sections | ✅ |
+| Docs site — 32 pages, deployed at `clairex-docs.vercel.app` | ✅ |
+| `.kiro/specs/` committed and current | ✅ |
+| Demo video | ⬜ outstanding |
+
+The docs were written as a task-oriented user guide with the API reference separated:
+getting-started, guides, `.claire` files, concepts, api. See Task 49 for the submission
+preparation that followed.
 
 ---
 
@@ -1655,6 +1686,60 @@ There is no API to add a single file icon to an existing icon theme. Shipping `i
 
 ---
 
+### Task 49: Submission Preparation ✅
+**Commits:** `75d9701`, `e12eb60`, `d3f19c7`…`0e51123`, `1107b2a`
+**Relates to:** Task 42
+
+Everything between "the framework works" and "a judge can evaluate it". The source was
+frozen before this task started — nothing here changed `src/`.
+
+**Licensing.** `LICENSE` (MIT) added at the root and a `license` field added to
+`package.json`. `@clairex/core` had been published with no license field, so npm was
+treating it as all-rights-reserved while `create-clairex` declared MIT — the two now agree.
+
+**README.** Rewritten from the `bun init` stub into a full document: hero, features, three
+getting-started paths, usage, configuration, testing, how Kiro was used, costs and limits,
+editor support, attribution, license. Covers all nine required submission items.
+
+An audit pass then caught: two malformed links rendering as literal text, a `.claire`
+import path missing its extension, a `bunfig.toml` fence tagged as bash, and two missing
+required sections (attribution, license). Getting Started was moved above the reference
+sections so setup instructions come first.
+
+**VS Code extension packaging.** `vsce package` failed with
+`invalid relative path: extension/../../tsconfig.json`. Cause: this is a Bun workspace, so
+`node_modules/@clairex/typescript-plugin` is a symlink to `../typescript-plugin`; `vsce`
+followed it out of the extension directory and tried to package the whole monorepo — 1999
+files. Two attempted fixes (removing `files`, declaring the plugin in `dependencies`) both
+failed, the second because workspace resolution reports the dependency's path as
+`../typescript-plugin`.
+
+Resolved by packaging from a dereferenced copy outside the monorepo (`cp -RL` to `/tmp`),
+where there is no parent workspace to escape into. The `.vsix` is committed at
+`packages/vscode-extension/clairex-vscode-0.1.0.vsix` (19 files, 84 KB) with the built
+plugin bundled at `node_modules/@clairex/typescript-plugin/dist/`.
+
+Two dead files removed while in there: `extension.ts` (unreferenced since the `main` entry
+point was dropped in Task 48) and a stray `dist/extension.js`.
+
+> **Note for future packaging:** the `.vsix` must be built from a copy outside the
+> monorepo, or Bun's workspace symlinks will break the manifest. `dist/` in
+> `typescript-plugin` is gitignored, so run its `build` first.
+
+**Distribution.** `create-clairex` published to npm (Task 41). Docs site deployed. Both
+repositories made public — until then every GitHub link in the docs site returned a 404 to
+anyone but the author.
+
+**Repository cleanup.** `draft/specs/` removed: an older, smaller duplicate of
+`.kiro/specs/` (342 vs 508 lines for design, 249 vs 1709 for tasks) plus a
+`design copy.md`. Two spec folders in one repository make it ambiguous which is
+authoritative. `draft/src/` was kept — Task 28 references it as the record of the earlier
+Hono-like approach.
+
+**Outstanding:** demo video (Task 42).
+
+---
+
 ## Summary
 
 | # | Task | Status |
@@ -1699,11 +1784,12 @@ There is no API to add a single file icon to an existing icon theme. Shipping `i
 | 38 | Sub-Exceptions — Scratched | ✅ Done |
 | 39 | Typed Handler Enforcement | ⬜ Pending |
 | 40 | Bun.plugin — .claire Extension | ✅ Experimental (2 rules working) |
-| 41 | CLI Scaffolding — create-clairex | ⬜ Pending |
-| 42 | Documentation & Submission | ⬜ Final |
+| 41 | CLI Scaffolding — create-clairex | ✅ Done |
+| 42 | Documentation & Submission | ⚠️ Video outstanding |
 | 43 | @clairex/typescript-plugin — Import Resolution | ✅ Done (solves Problem 5) |
 | 44 | VS Code Extension — clairex-vscode | ✅ Superseded by Task 48 |
 | 45 | ClaireValidator — One Validator Per Resource | ✅ Done |
 | 46 | ClaireContext — `patched<T>()` & Silent PATCH Bug | ✅ Done |
 | 47 | ValidationRule — `immutable` Flag | ✅ Done |
 | 48 | VS Code Extension — .claire as First-Class TypeScript | ✅ Done |
+| 49 | Submission Preparation | ✅ Done |
