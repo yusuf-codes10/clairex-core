@@ -111,6 +111,22 @@ bun test
 
 Covers route matching, validation rules, exception handling, and utilities.
 
+## How Kiro was used
+
+ClaireX was built spec-first. The specs live in .kiro/specs/clairex-core/:
+
+- `requirements.md`: 13 user stories with acceptance criteria and a traceability table
+
+- `design.md`: architecture and class responsibilities
+
+- `tasks.md`: 48 numbered tasks, each recording the commits that implemented it
+
+The specs were a living document, not documentation written afterwards. Task 44 is marked superseded by Task 48. Task 38 records a feature that was planned and dropped. The Open Problems section logged five problems before solutions existed. Two user stories are marked partial, because they are.
+
+The clearest example is **Task 46**, which documents a data-loss bug found mid-build: a `PATCH` carrying only some fields was being read as a complete object, silently erasing stored values. The task records the diagnosis, the fix, and the commits — starting with `f940e3c`, "issue found: patch data lost". The fix made the mistake impossible to express: patched<T>() returns Partial<T>, so the erasing assignment no longer compiles.
+
+
+
 ## Author
 
 [Yusuf Codes10](!https://github.com/yusuf-codes10)
