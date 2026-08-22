@@ -152,6 +152,121 @@ If the code command isn't on your PATH, install it through the VS Code UI instea
 
 Then reload VS Code.
 
+## Getting Started
+
+Three ways in, depending on whether you want to *see* ClaireX working or *build* with it.
+
+---
+
+### 1. Run the example (fastest look)
+
+Clone the repo and run the bundled example. Nothing to create, nothing to configure.
+
+```bash
+git clone https://github.com/yusuf-codes10/clairex-core.git
+cd clairex-core
+bun install
+bun run app
+```
+
+The server starts on `http://localhost:2300` with a complete `users` resource — routes, validation, and error handling already wired.
+
+```bash
+curl http://localhost:2300/users
+```
+
+Try the validation:
+
+```bash
+# rejected — name is too short
+curl -X POST http://localhost:2300/users \
+  -H "Content-Type: application/json" \
+  -d '{"id":4,"name":"Ad","age":36}'
+
+# accepted
+curl -X POST http://localhost:2300/users \
+  -H "Content-Type: application/json" \
+  -d '{"id":4,"name":"Ada","age":36}'
+```
+
+And a partial update — note the name survives:
+
+```bash
+curl -X PATCH http://localhost:2300/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{"age":24}'
+```
+
+This is also the only path that gives you the bundled VS Code extension, since it lives in `packages/`.
+
+---
+
+### 2. Scaffold a project (recommended)
+
+The way to actually start building.
+
+```bash
+bun create clairex my-app
+cd my-app
+bun install
+bun dev
+```
+
+You get a running API on `http://localhost:3000` and four files:
+
+```
+src/
+├── index.ts                          the app
+├── types/user.ts                     compile-time shape
+├── keys/user.key.claire              routes + handlers
+└── validators/user.validator.claire  runtime shape
+```
+
+`bunfig.toml` and `tsconfig.json` are generated for you, already configured — including the `.claire` loader, so `.claire` files work immediately.
+
+---
+
+### 3. Install manually (least recommended)
+
+Only if you want ClaireX inside an existing project, or you'd rather assemble it yourself.
+
+```bash
+mkdir my-app && cd my-app
+bun init -y
+bun add @clairex/core
+```
+
+Then create `bunfig.toml` in the project root:
+
+```toml
+preload = ["@clairex/core/plugin"]
+```
+
+**This step is required if you use `.claire` files.** Without it, Bun parses them with no loader and their exports come back empty — you'll get `Export named 'userKey' not found`, which doesn't point anywhere near the real cause. If you only use `.ts` files, you can skip it.
+
+You'll also need strict TypeScript settings in `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "types": ["bun"]
+  }
+}
+```
+
+`noImplicitOverride` matters — ClaireX relies on `override` being explicit when you extend its classes.
+
+This path is least recommended because these two files are easy to get wrong and the resulting errors don't explain themselves. Options 1 and 2 hand them to you correctly.
+
+---
+
+> Imports of `.claire` files must include the extension: `./keys/user.key.claire`. There is no extension resolution — the loader matches on the literal filename.
+
+
 ## Author
 
 [Yusuf Codes10](!https://github.com/yusuf-codes10)
