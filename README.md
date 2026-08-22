@@ -1,15 +1,9 @@
-# clairex-core
+<div align="center">
+  <a href="https://clairex-docs.vercel.app/">
+    <img src="https://github.com/yusuf-codes10/clairex-docs/public/images/example.png" width="500" height="auto" alt="ClaireX"/>
+  </a>
+</div>
 
-To install dependencies:
+<hr />
 
-```bash
-bun install
-```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.14. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+ClaireX a bun framework for typescript
