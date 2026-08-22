@@ -125,7 +125,13 @@ The specs were a living document, not documentation written afterwards. Task 44 
 
 The clearest example is **Task 46**, which documents a data-loss bug found mid-build: a `PATCH` carrying only some fields was being read as a complete object, silently erasing stored values. The task records the diagnosis, the fix, and the commits — starting with `f940e3c`, "issue found: patch data lost". The fix made the mistake impossible to express: patched<T>() returns Partial<T>, so the erasing assignment no longer compiles.
 
+## Costs and Limits
 
+**Costs**: none. ClaireX calls no external services and requires no API keys or accounts.
+
+**Rate limits**: none.
+
+**Test credentials**: none required.
 
 ## Author
 
