@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://clairex-docs.vercel.app/">
-    <img src="https://clairex-docs.vercel.app/images/logo.png" width="500" height="auto" alt="ClaireX"/>
+    <img src="https://clairex-docs.vercel.app/images/logo.png" width="500" alt="ClaireX"/>
   </a>
 </div>
 
@@ -14,12 +14,6 @@ import { ClaireX } from "@clairex/core";
 new ClaireX().listen();
 ```
 
-## Quick Start
-
-```bash
-bun create clairex my-app
-```
-
 ## Features
 
 - **OOP First** Everything is a class you instantiate, extend, and override. No decorators, no config objects, no magic strings. `override` is enforced, so you always know when you're replacing framework behaviour.
@@ -29,128 +23,6 @@ bun create clairex my-app
 - **ClaireKey (5 in 1)** Controller, router group, module, middleware scope, and plugin in a single class. A key owns its prefix, routes, handlers, and scoped middleware; `unlock()` mounts all of it at once. Routes are never defined on the app.
 
 - **`.claire` files** An optional file extension: TypeScript with two extra rules enforced when the file loads. It must export a class, and methods declared with `private`, `public`, `protected`, or `override` must declare an explicit return type. Break either and the process stops before the server starts, a violation is an error, not a warning.
-
-## Usage
-
-Every resource is a `ClaireKey`, it owns its prefix, its routes, its handlers, and its middleware.
-
-```ts
-// src/keys/user.key.claire
-export class userKey extends ClaireKey {
-  constructor() {
-    super("/users");
-  }
-
-  protected register(): void {
-    this.routes("get", "/", this.getUsers);
-    this.routes("post", "/", this.createUser, [new userValidator()]);
-    this.routes("patch", "/:id", this.updateUser, [new userValidator()]);
-  }
-}
-```
-
-Mount and every route comes with it:
-
-```ts
-new ClaireX(3000).unlock(new userKey()).listen();
-```
-
-One validator serves the whole resource. `POST` requires every field; `PATCH` treats them as optional but still enfornces types and bounds:
-
-```ts
-export class userValidator extends ClaireValidator {
-  override rules(): ValidationSchema {
-    return {
-      id: { type: "number", required: true, immutable: true },
-      name: { type: "string", required: true, min: 3, max: 50 },
-      age: { type: "number", required: true, min: 18 },
-    };
-  }
-}
-```
-
-Read the full body with `valid<T>()`, a partial one with `patched<T>()` which returns `Partial<T>`, so a partial update cannot be assigned as though it were complete.
-
-Full documantation: [!https://clairex-docs.vercel.app]
-
-## Configuration
-
-`bunfig.toml` required if you use `.claire` files:
-
-```bash
-# root
-preload = ["@clairex/core/plugin"]
-
-```
-
-Without this, Bun parses `.claire` files with no loader and their exports come back empty. You get Export named `userKey` not found, which doesn't hint at the cause. Plain .ts files need no configuration.
-
-`tsconfig.json` ClaireX expects strict, explicit typing:
-
-```json
-{
-  "compilerOptions": {
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "verbatimModuleSyntax": true,
-    "types": ["bun"]
-  }
-}
-```
-
-`noImplicitOverride` matters. ClaireX relies on override being explicit when you extend its classes.
-
-Imports of `.claire` files must include the extension: ./keys/user.key.claire.
-
-## Testing
-
-```bash
-bun test
-```
-
-Covers route matching, validation rules, exception handling, and utilities.
-
-## How Kiro was used
-
-ClaireX was built spec-first. The specs live in .kiro/specs/clairex-core/:
-
-- `requirements.md`: 13 user stories with acceptance criteria and a traceability table
-
-- `design.md`: architecture and class responsibilities
-
-- `tasks.md`: 48 numbered tasks, each recording the commits that implemented it
-
-The specs were a living document, not documentation written afterwards. Task 44 is marked superseded by Task 48. Task 38 records a feature that was planned and dropped. The Open Problems section logged five problems before solutions existed. Two user stories are marked partial, because they are.
-
-The clearest example is **Task 46**, which documents a data-loss bug found mid-build: a `PATCH` carrying only some fields was being read as a complete object, silently erasing stored values. The task records the diagnosis, the fix, and the commits — starting with `f940e3c`, "issue found: patch data lost". The fix made the mistake impossible to express: patched<T>() returns Partial<T>, so the erasing assignment no longer compiles.
-
-## Costs and Limits
-
-**Costs**: none. ClaireX calls no external services and requires no API keys or accounts.
-
-**Rate limits**: none.
-
-**Test credentials**: none required.
-
-## Editor Support (Optional)
-
-ClaireX ships a **VS Code extension** that teaches the editor about `.claire`
-files, it resolves `.claire` imports and gives them full TypeScript language
-support (autocomplete, go-to-definition, inline errors).
-
-This is optional. `.claire` files run correctly without it; only the editing
-experience changes.
-
-The extension is bundled in this repo as a `.vsix`. From a clone of
-`clairex-core`:
-
-```bash
-code --install-extension packages/vscode-extension/clairex-vscode-0.1.0.vsix
-```
-If the code command isn't on your PATH, install it through the VS Code UI instead: Extensions → ⋯ → Install from VSIX… and select the file above.
-
-Then reload VS Code.
 
 ## Getting Started
 
@@ -266,7 +138,143 @@ This path is least recommended because these two files are easy to get wrong and
 
 > Imports of `.claire` files must include the extension: `./keys/user.key.claire`. There is no extension resolution — the loader matches on the literal filename.
 
+## Usage
+
+Every resource is a `ClaireKey`, it owns its prefix, its routes, its handlers, and its middleware.
+
+```ts
+// src/keys/user.key.claire
+export class userKey extends ClaireKey {
+  constructor() {
+    super("/users");
+  }
+
+  protected register(): void {
+    this.routes("get", "/", this.getUsers);
+    this.routes("post", "/", this.createUser, [new userValidator()]);
+    this.routes("patch", "/:id", this.updateUser, [new userValidator()]);
+  }
+}
+```
+
+Mount and every route comes with it:
+
+```ts
+new ClaireX(3000).unlock(new userKey()).listen();
+```
+
+One validator serves the whole resource. `POST` requires every field; `PATCH` treats them as optional but still enforces types and bounds:
+
+```ts
+export class userValidator extends ClaireValidator {
+  override rules(): ValidationSchema {
+    return {
+      id: { type: "number", required: true, immutable: true },
+      name: { type: "string", required: true, min: 3, max: 50 },
+      age: { type: "number", required: true, min: 18 },
+    };
+  }
+}
+```
+
+Read the full body with `valid<T>()`, a partial one with `patched<T>()` which returns `Partial<T>`, so a partial update cannot be assigned as though it were complete.
+
+Full documentation: [clairex-docs.vercel.app](https://clairex-docs.vercel.app/)
+
+## Configuration
+
+`bunfig.toml` required if you use `.claire` files:
+
+```toml
+# root
+preload = ["@clairex/core/plugin"]
+```
+
+Without this, Bun parses `.claire` files with no loader and their exports come back empty. You get `Export named 'userKey' not found`, which doesn't hint at the cause. Plain `.ts` files need no configuration.
+
+`tsconfig.json` ClaireX expects strict, explicit typing:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "types": ["bun"]
+  }
+}
+```
+
+`noImplicitOverride` matters. ClaireX relies on `override` being explicit when you extend its classes.
+
+Imports of `.claire` files must include the extension: `./keys/user.key.claire`.
+
+## Testing
+
+```bash
+bun test
+```
+
+Covers route matching, validation rules, exception handling, and utilities.
+
+## How Kiro Was Used
+
+ClaireX was built spec-first. The specs live in [`.kiro/specs/clairex-core/`](.kiro/specs/clairex-core/):
+
+- `requirements.md`: 13 user stories with acceptance criteria and a traceability table
+
+- `design.md`: architecture and class responsibilities
+
+- `tasks.md`: 48 numbered tasks, each recording the commits that implemented it
+
+The specs were a living document, not documentation written afterwards. Task 44 is marked superseded by Task 48. Task 38 records a feature that was planned and dropped. The Open Problems section logged five problems before solutions existed. Two user stories are marked partial, because they are.
+
+The clearest example is **Task 46**, which documents a data-loss bug found mid-build: a `PATCH` carrying only some fields was being read as a complete object, silently erasing stored values. The task records the diagnosis, the fix, and the commits — starting with `f940e3c`, "issue found: patch data lost". The fix made the mistake impossible to express: `patched<T>()` returns `Partial<T>`, so the erasing assignment no longer compiles.
+
+## Costs and Limits
+
+**Costs**: none. ClaireX calls no external services and requires no API keys or accounts.
+
+**Rate limits**: none.
+
+**Test credentials**: none required.
+
+## Editor Support (Optional)
+
+ClaireX ships a **VS Code extension** that teaches the editor about `.claire`
+files, it resolves `.claire` imports and gives them full TypeScript language
+support (autocomplete, go-to-definition, inline errors).
+
+This is optional. `.claire` files run correctly without it; only the editing
+experience changes.
+
+The extension is bundled in this repo as a `.vsix`. From a clone of
+`clairex-core`:
+
+```bash
+code --install-extension packages/vscode-extension/clairex-vscode-0.1.0.vsix
+```
+If the code command isn't on your PATH, install it through the VS Code UI instead: Extensions → ⋯ → Install from VSIX… and select the file above.
+
+Then reload VS Code.
+
+## Attribution
+
+ClaireX has **zero runtime dependencies**.
+
+| | |
+|---|---|
+| [Bun](https://bun.sh) | runtime — `Bun.serve` and `Bun.plugin` |
+| `typescript` | peer dependency |
+| `@types/bun` | development only |
+
+The documentation site is built with Nuxt, Nuxt Content, Nuxt UI, and Tailwind CSS.
+
+## License
+
+[MIT](LICENSE) © 2026 - present, Yusuf Codes10
 
 ## Author
 
-[Yusuf Codes10](!https://github.com/yusuf-codes10)
+[Yusuf Codes10](https://github.com/yusuf-codes10)
