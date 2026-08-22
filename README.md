@@ -9,11 +9,9 @@
 ClaireX -claire, French for clear- is a class-based, explicitly-typed web framework for Bun. One class per resource, validation built in, three-level middleware and zero runtime dependencies.
 
 ```ts
-import { ClaireX } from '@clairex/core';
+import { ClaireX } from "@clairex/core";
 
-new ClaireX()
-.listen();
-
+new ClaireX().listen();
 ```
 
 ## Quick Start
@@ -39,23 +37,22 @@ Every resource is a `ClaireKey`, it owns its prefix, its routes, its handlers, a
 ```ts
 // src/keys/user.key.claire
 export class userKey extends ClaireKey {
-    constructor() {
-        super('/users');
-    }
+  constructor() {
+    super("/users");
+  }
 
-    protected register(): void {
-        this.routes('get', '/', this.getUsers);
-        this.routes('post', '/', this.createUser, [new userValidator()]);
-        this.routes('patch', '/:id', this.updateUser, [new userValidator()]);
-    }
+  protected register(): void {
+    this.routes("get", "/", this.getUsers);
+    this.routes("post", "/", this.createUser, [new userValidator()]);
+    this.routes("patch", "/:id", this.updateUser, [new userValidator()]);
+  }
 }
-
 ```
 
 Mount and every route comes with it:
 
 ```ts
-new ClaireX(3000).unlock(new userKey()).listen()
+new ClaireX(3000).unlock(new userKey()).listen();
 ```
 
 One validator serves the whole resource. `POST` requires every field; `PATCH` treats them as optional but still enfornces types and bounds:
@@ -64,9 +61,9 @@ One validator serves the whole resource. `POST` requires every field; `PATCH` tr
 export class userValidator extends ClaireValidator {
   override rules(): ValidationSchema {
     return {
-      id:   { type: "number", required: true, immutable: true },
+      id: { type: "number", required: true, immutable: true },
       name: { type: "string", required: true, min: 3, max: 50 },
-      age:  { type: "number", required: true, min: 18 },
+      age: { type: "number", required: true, min: 18 },
     };
   }
 }
@@ -76,6 +73,38 @@ Read the full body with `valid<T>()`, a partial one with `patched<T>()` which re
 
 Full documantation: [!https://clairex-docs.vercel.app]
 
+## Configuration
+
+`bunfig.toml` required if you use `.claire` files:
+
+```bash
+# root
+preload = ["@clairex/core/plugin"]
+
+```
+
+Without this, Bun parses `.claire` files with no loader and their exports come back empty. You get Export named `userKey` not found, which doesn't hint at the cause. Plain .ts files need no configuration.
+
+`tsconfig.json` ClaireX expects strict, explicit typing:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "types": ["bun"]
+  }
+}
+```
+
+`noImplicitOverride` matters. ClaireX relies on override being explicit when you extend its classes.
+
+Imports of `.claire` files must include the extension: ./keys/user.key.claire.
+
+
 
 ## Author
+
 [Yusuf Codes10](!https://github.com/yusuf-codes10)
