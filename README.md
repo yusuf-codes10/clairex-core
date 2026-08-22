@@ -24,8 +24,6 @@ bun create clairex my-app
 
 ## Features
 
-## Features
-
 - **OOP First** Everything is a class you instantiate, extend, and override. No decorators, no config objects, no magic strings. `override` is enforced, so you always know when you're replacing framework behaviour.
 
 - **Built-in Validation** One `ClaireValidator` per resource, not one per action. No Zod, no Yup, no Joi, no dependencies. Enforcement adapts to the method: `POST` and `PUT` require every field, `PATCH` treats them as optional while still checking types and bounds, and `immutable` fields are rejected on update.
@@ -34,6 +32,50 @@ bun create clairex my-app
 
 - **`.claire` files** An optional file extension: TypeScript with two extra rules enforced when the file loads. It must export a class, and methods declared with `private`, `public`, `protected`, or `override` must declare an explicit return type. Break either and the process stops before the server starts, a violation is an error, not a warning.
 
+## Usage
+
+Every resource is a `ClaireKey`, it owns its prefix, its routes, its handlers, and its middleware.
+
+```ts
+// src/keys/user.key.claire
+export class userKey extends ClaireKey {
+    constructor() {
+        super('/users');
+    }
+
+    protected register(): void {
+        this.routes('get', '/', this.getUsers);
+        this.routes('post', '/', this.createUser, [new userValidator()]);
+        this.routes('patch', '/:id', this.updateUser, [new userValidator()]);
+    }
+}
+
+```
+
+Mount and every route comes with it:
+
+```ts
+new ClaireX(3000).unlock(new userKey()).listen()
+```
+
+One validator serves the whole resource. `POST` requires every field; `PATCH` treats them as optional but still enfornces types and bounds:
+
+```ts
+export class userValidator extends ClaireValidator {
+  override rules(): ValidationSchema {
+    return {
+      id:   { type: "number", required: true, immutable: true },
+      name: { type: "string", required: true, min: 3, max: 50 },
+      age:  { type: "number", required: true, min: 18 },
+    };
+  }
+}
+```
+
+Read the full body with `valid<T>()`, a partial one with `patched<T>()` which returns `Partial<T>`, so a partial update cannot be assigned as though it were complete.
+
+Full documantation: [!https://clairex-docs.vercel.app]
+
 
 ## Author
-Yusuf Codes10 [!https://github.com/yusuf-codes10]
+[Yusuf Codes10](!https://github.com/yusuf-codes10)
