@@ -103,7 +103,13 @@ Without this, Bun parses `.claire` files with no loader and their exports come b
 
 Imports of `.claire` files must include the extension: ./keys/user.key.claire.
 
+## Testing
 
+```bash
+bun test
+```
+
+Covers route matching, validation rules, exception handling, and utilities.
 
 ## Author
 
