@@ -5,6 +5,12 @@
 </div>
 
 <hr />
+[![npm](https://img.shields.io/npm/v/@clairex/core)](https://www.npmjs.com/package/@clairex/core)
+![Bun](https://img.shields.io/badge/runtime-Bun-000000)
+![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-clairex--docs-722f37)](https://clairex-docs.vercel.app/)
+
 
 ClaireX -claire, French for clear- is a class-based, explicitly-typed web framework for Bun. One class per resource, validation built in, three-level middleware and zero runtime dependencies.
 
