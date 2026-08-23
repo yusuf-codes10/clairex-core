@@ -20,6 +20,26 @@ import { ClaireX } from "@clairex/core";
 new ClaireX().listen();
 ```
 
+## Table of Contents
+
+- [Documentation](#documentation)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [1. Run the example (fastest look)](#1-run-the-example-fastest-look)
+  - [2. Scaffold a project (recommended)](#2-scaffold-a-project-recommended)
+  - [3. Install manually (least recommended)](#3-install-manually-least-recommended)
+- [Usage](#usage)
+- [Configuration](#configuration)
+- [Testing](#testing)
+- [How Kiro Was Used](#how-kiro-was-used)
+  - [Beyond the specs](#beyond-the-specs)
+- [Costs and Limits](#costs-and-limits)
+- [Editor Support (Optional)](#editor-support-optional)
+- [Attribution](#attribution)
+- [License](#license)
+- [Author](#author)
+
+
 ## Documentation
 
 Full documentation: **[clairex-docs.vercel.app](https://clairex-docs.vercel.app/)**
