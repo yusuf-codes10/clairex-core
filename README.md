@@ -20,6 +20,21 @@ import { ClaireX } from "@clairex/core";
 new ClaireX().listen();
 ```
 
+## Documentation
+
+Full documentation: **[clairex-docs.vercel.app](https://clairex-docs.vercel.app/)**
+
+| | |
+|---|---|
+| [Introduction](https://clairex-docs.vercel.app/docs/getting-started/introduction) | What ClaireX is and the four principles |
+| [Installation](https://clairex-docs.vercel.app/docs/getting-started/installation) | Scaffold, manual install, editor setup |
+| [Your First API](https://clairex-docs.vercel.app/docs/getting-started/first-api) | Guided tour of the scaffolded project |
+| [Guides](https://clairex-docs.vercel.app/docs/guides/routes) | Routes, validation, middleware, auth, errors |
+| [.claire Files](https://clairex-docs.vercel.app/docs/claire-files/overview) | The extension and its load-time rules |
+| [Concepts](https://clairex-docs.vercel.app/docs/concepts/architecture) | Architecture and design decisions |
+| [API Reference](https://clairex-docs.vercel.app/docs/api/clairex) | One page per class |
+
+
 ## Features
 
 - **OOP First** Everything is a class you instantiate, extend, and override. No decorators, no config objects, no magic strings. `override` is enforced, so you always know when you're replacing framework behaviour.
