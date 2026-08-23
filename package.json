@@ -1,15 +1,41 @@
 {
   "name": "@clairex/core",
-  "description": "A class-based, explicitly-typed web framework for Bun. OOP-first, built-in validation, zero external dependencie",
-  "module": "dist/index.js",
+  "description": "A class-based, explicitly-typed web framework for Bun. OOP-first, built-in validation, zero external dependencies",
+  "version": "1.0.1",
+  "license": "MIT",
   "type": "module",
+  "module": "dist/index.js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "version": "1.0.0",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yusuf-codes10/clairex-core.git"
+  },
+  "homepage": "https://clairex-docs.vercel.app",
+  "bugs": {
+    "url": "https://github.com/yusuf-codes10/clairex-core/issues"
+  },
+  "keywords": [
+    "clairex",
+    "bun",
+    "framework",
+    "web-framework",
+    "typescript",
+    "oop",
+    "validation",
+    "class-based",
+    "zero-dependencies"
+  ],
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": "./dist/plugin/claire-loader.js"
+  },
   "scripts": {
     "build": "rm -rf dist && bun build ./src/index.ts ./src/plugin/claire-loader.ts --outdir ./dist --target bun && bunx tsc -p tsconfig.build.json",
     "dev": "bun run src/index.ts",
@@ -25,13 +51,5 @@
   },
   "workspaces": [
     "packages/*"
-  ],
-"exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./plugin": "./dist/plugin/claire-loader.js"
-}
-
+  ]
 }
