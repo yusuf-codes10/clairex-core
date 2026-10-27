@@ -16,13 +16,15 @@
 
 
 
-ClaireX -claire, French for clear- is a class-based, explicitly-typed web framework for Bun. One class per resource, validation built in, three-level middleware and zero runtime dependencies.
+ClaireX (claire, French for clear) is a class-based, explicitly-typed web framework for Bun. One class per resource, validation built in, three-level middleware and zero runtime dependencies.
 
 ```ts
 import { ClaireX } from "@clairex/core";
 
 new ClaireX().listen();
 ```
+## Why ClaireX
+
 
 ## Features
 

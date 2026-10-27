@@ -4,7 +4,7 @@ import { logClaireException } from '../core/utils';
 plugin({
   name: "claire-loader",
   setup(build) {
-    build.onLoad({ filter: /\.claire$/ }, async ({ path }) => {
+    build.onLoad({ filter: /\.cx$/ }, async ({ path }) => {
       const contents = await Bun.file(path).text();
 
       validate(contents, path);
@@ -20,7 +20,7 @@ plugin({
 export const validate = (content: string, filePath: string): void => {
   // Rule 1: Must export a class
   if (!/^\s*export\s+(default\s+)?class\s+\w+/m.test(content)) {
-    throw new Error(`[ClaireX] ${filePath}: .claire files must export a class`);
+    throw new Error(`[ClaireX] ${filePath}: .cx files must export a class`);
   }
 
   // Rule 2: All methods must have explicit return types
