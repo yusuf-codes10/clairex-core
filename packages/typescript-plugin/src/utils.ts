@@ -1,3 +1,3 @@
-export function isClaireFilePath(filePath: string): boolean {
-    return filePath.endsWith('.claire');
+export function isCxFilePath(filePath: string): boolean {
+    return filePath.endsWith('.cx');
 }

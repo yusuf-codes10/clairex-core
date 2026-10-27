@@ -1,5 +1,5 @@
 import type ts from 'typescript/lib/tsserverlibrary';
-import { isClaireFilePath } from './utils';
+import { isCxFilePath } from './utils';
 
 export function patchModuleLoader(
     typescript: typeof ts,
@@ -31,7 +31,7 @@ export function patchModuleLoader(
                 const moduleName = moduleLiterals[idx].text;
 
                 // Skip if not a .claire file or already resolved
-                if (!isClaireFilePath(moduleName) || result.resolvedModule) {
+                if (!isCxFilePath(moduleName) || result.resolvedModule) {
                     return result;
                 }
 
