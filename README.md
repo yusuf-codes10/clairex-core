@@ -24,41 +24,6 @@ import { ClaireX } from "@clairex/core";
 new ClaireX().listen();
 ```
 
-## Table of Contents
-
-- [Documentation](#documentation)
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [1. Run the example (fastest look)](#1-run-the-example-fastest-look)
-  - [2. Scaffold a project (recommended)](#2-scaffold-a-project-recommended)
-  - [3. Install manually (least recommended)](#3-install-manually-least-recommended)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [How Kiro Was Used](#how-kiro-was-used)
-  - [Beyond the specs](#beyond-the-specs)
-- [Costs and Limits](#costs-and-limits)
-- [Editor Support (Optional)](#editor-support-optional)
-- [Attribution](#attribution)
-- [License](#license)
-- [Author](#author)
-
-
-## Documentation
-
-Full documentation: **[clairex-docs.vercel.app](https://clairex-docs.vercel.app/)**
-
-| | |
-|---|---|
-| [Introduction](https://clairex-docs.vercel.app/docs/getting-started/introduction) | What ClaireX is and the four principles |
-| [Installation](https://clairex-docs.vercel.app/docs/getting-started/installation) | Scaffold, manual install, editor setup |
-| [Your First API](https://clairex-docs.vercel.app/docs/getting-started/first-api) | Guided tour of the scaffolded project |
-| [Guides](https://clairex-docs.vercel.app/docs/guides/routes) | Routes, validation, middleware, auth, errors |
-| [.claire Files](https://clairex-docs.vercel.app/docs/claire-files/overview) | The extension and its load-time rules |
-| [Concepts](https://clairex-docs.vercel.app/docs/concepts/architecture) | Architecture and design decisions |
-| [API Reference](https://clairex-docs.vercel.app/docs/api/clairex) | One page per class |
-
-
 ## Features
 
 - **OOP First** Everything is a class you instantiate, extend, and override. No decorators, no config objects, no magic strings. `override` is enforced, so you always know when you're replacing framework behaviour.
@@ -183,46 +148,7 @@ This path is least recommended because these two files are easy to get wrong and
 
 > Imports of `.claire` files must include the extension: `./keys/user.key.claire`. There is no extension resolution — the loader matches on the literal filename.
 
-## Usage
-
-Every resource is a `ClaireKey`, it owns its prefix, its routes, its handlers, and its middleware.
-
-```ts
-// src/keys/user.key.claire
-export class userKey extends ClaireKey {
-  constructor() {
-    super("/users");
-  }
-
-  protected register(): void {
-    this.routes("get", "/", this.getUsers);
-    this.routes("post", "/", this.createUser, [new userValidator()]);
-    this.routes("patch", "/:id", this.updateUser, [new userValidator()]);
-  }
-}
-```
-
-Mount and every route comes with it:
-
-```ts
-new ClaireX(3000).unlock(new userKey()).listen();
-```
-
-One validator serves the whole resource. `POST` requires every field; `PATCH` treats them as optional but still enforces types and bounds:
-
-```ts
-export class userValidator extends ClaireValidator {
-  override rules(): ValidationSchema {
-    return {
-      id: { type: "number", required: true, immutable: true },
-      name: { type: "string", required: true, min: 3, max: 50 },
-      age: { type: "number", required: true, min: 18 },
-    };
-  }
-}
-```
-
-Read the full body with `valid<T>()`, a partial one with `patched<T>()` which returns `Partial<T>`, so a partial update cannot be assigned as though it were complete.
+## Documentation
 
 Full documentation: [clairex-docs.vercel.app](https://clairex-docs.vercel.app/)
 
@@ -262,44 +188,6 @@ bun test
 ```
 
 Covers route matching, validation rules, exception handling, and utilities.
-
-## How Kiro Was Used
-
-ClaireX was built spec-first. The specs live in [`.kiro/specs/clairex-core/`](.kiro/specs/clairex-core/):
-
-- `requirements.md`: 13 user stories with acceptance criteria and a traceability table
-
-- `design.md`: architecture and class responsibilities
-
-- `tasks.md`: 48 numbered tasks, each recording the commits that implemented it
-
-The specs were a living document, not documentation written afterwards. Task 44 is marked superseded by Task 48. Task 38 records a feature that was planned and dropped. The Open Problems section logged five problems before solutions existed. Two user stories are marked partial, because they are.
-
-The clearest example is **Task 46**, which documents a data-loss bug found mid-build: a `PATCH` carrying only some fields was being read as a complete object, silently erasing stored values. The task records the diagnosis, the fix, and the commits — starting with `f940e3c`, "issue found: patch data lost". The fix made the mistake impossible to express: `patched<T>()` returns `Partial<T>`, so the erasing assignment no longer compiles.
-
-### Beyond the specs
-
-Planning is where the specs are visible, but Kiro was used across the whole lifecycle:
-
-| Phase | What Kiro did | Where to look |
-|---|---|---|
-| Planning | Turned the idea into requirements, a design, and a sequenced task list — 13 user stories, 48 tasks | [`.kiro/specs/`](.kiro/specs/clairex-core/) |
-| Implementation | Worked task by task; each task records the commits that implemented it | [`tasks.md`](.kiro/specs/clairex-core/tasks.md) |
-| Debugging | Traced a `vsce` packaging failure (`invalid relative path`) to Bun workspace resolution walking out of the extension folder, and fixed the packaging step | `e12eb60` |
-| Documentation | Reviewed the docs site against the source — caught a `.claire` import missing its extension, and a loader rule described as stricter than it is | [`b3794ab`](https://github.com/yusuf-codes10/clairex-docs/commit/b3794ab) |
-| Optimization | Found two layout bugs: a sticky sidebar clipping its last items below the fold, and a missing `min-w-0` letting wide code blocks scroll the whole page sideways | [`ab599fe`](https://github.com/yusuf-codes10/clairex-docs/commit/ab599fe) |
-| Review | Audited this README against the submission requirements — broken links, missing sections | `188c821` |
-
-No steering files and no hooks were used. Development happened in one long Kiro session with the spec files as the shared reference: when the design changed, the specs changed, and the session stayed aligned to them. That made a separate steering layer unnecessary.
-
-
-## Costs and Limits
-
-**Costs**: none. ClaireX calls no external services and requires no API keys or accounts.
-
-**Rate limits**: none.
-
-**Test credentials**: none required.
 
 ## Editor Support (Optional)
 
