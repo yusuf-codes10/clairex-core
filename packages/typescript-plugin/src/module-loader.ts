@@ -26,16 +26,16 @@ export function patchModuleLoader(
                 reusedNames
             );
 
-            // 2. For any .claire imports that failed → resolve ourselves
+            // 2. For any .cx imports that failed → resolve ourselves
             return resolved.map((result, idx) => {
                 const moduleName = moduleLiterals[idx].text;
 
-                // Skip if not a .claire file or already resolved
+                // Skip if not a .cx file or already resolved
                 if (!isCxFilePath(moduleName) || result.resolvedModule) {
                     return result;
                 }
 
-                // Resolve the .claire file as TypeScript
+                // Resolve the .cx file as TypeScript
                 const resolvedModule = resolveClaireModule(
                     typescript,
                     moduleName,
@@ -60,7 +60,7 @@ function resolveClaireModule(
     containingFile: string,
     options: ts.CompilerOptions
 ): ts.ResolvedModuleFull | undefined {
-    // Since .claire imports always use the full extension,
+    // Since .cx imports always use the full extension,
     // resolve the path manually relative to the containing file
     const containingDir = path.dirname(containingFile);
     const resolvedPath = path.resolve(containingDir, moduleName);
