@@ -1,4 +1,4 @@
 {
-    "scopeName": "source.claire",
+    "scopeName": "source.cx",
     "patterns": [{ "include": "source.ts" }]
 }
