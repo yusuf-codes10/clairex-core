@@ -1,0 +1,4 @@
+   **/*.vsix
+   **/tsconfig.json
+   **/src/**
+   .vscodeignore

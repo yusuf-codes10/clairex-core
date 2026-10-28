@@ -5,6 +5,7 @@
     "description": "Language support for .cx files — ClaireX framework",
     "version": "0.2.0",
     "publisher": "clairex",
+    "license": "MIT",
     "engines": {
         "vscode": "^1.80.0"
     },
