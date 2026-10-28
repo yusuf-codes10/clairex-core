@@ -2,8 +2,8 @@
     "name": "clairex-vscode",
     "icon": "./assets/claire-icon.png",
     "displayName": "ClaireX",
-    "description": "Language support for .claire files — ClaireX framework",
-    "version": "0.1.0",
+    "description": "Language support for .cx files — ClaireX framework",
+    "version": "0.2.0",
     "publisher": "clairex",
     "engines": {
         "vscode": "^1.80.0"
@@ -31,7 +31,7 @@
         ],
         "configurationDefaults": {
             "files.associations": {
-                "*.claire": "typescript"
+                "*.cx": "typescript"
             },
             "material-icon-theme.files.customClones": [
                 {
@@ -39,7 +39,7 @@
                     "base": "typescript",
                     "color": "#722f37",
                     "fileExtensions": [
-                        "claire"
+                        "cx"
                     ]
                 }
             ]
