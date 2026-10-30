@@ -22,11 +22,11 @@ Language support for `.cx` files, the source files of the [ClaireX](https://gith
 
 3. Open any `.cx` file. Highlighting and type checking work right away.
 
-## Snippets
+<!-- ## Snippets
 
 | Prefix | Description |
 | ------ | ----------- |
-| `TODO` | Fill in from `snippets/claire.json` |
+| `TODO` | Fill in from `snippets/claire.json` | -->
 
 ## Requirements
 
@@ -40,6 +40,10 @@ Language support for `.cx` files, the source files of the [ClaireX](https://gith
 - ClaireX files are highlighted as TypeScript. There is no dedicated ClaireX grammar yet.
 
 Found a bug or have an idea? [Open an issue](https://github.com/yusuf-codes10/clairex-core/issues).
+
+## Documentation
+
+[Documentation](https://clairex.vercel.app/)
 
 ## Release notes
 
