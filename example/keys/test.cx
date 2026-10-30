@@ -1,7 +1,7 @@
 import { ClaireKey } from "../../src/core/key";
 import { ClaireContext } from "../../src/core/context";
 import { ClaireException } from "../../src/core/exception";
-import { userValidator } from "../validators/user.validator";
+import { userValidator } from "../validators/user.validator.cx";
 
 type User = {
   id: number;
@@ -27,7 +27,8 @@ export class userKey extends ClaireKey {
     this.routes("patch", "/:id", this.updateUserName, [new userValidator()]);
   }
 
-  private getUsers(c: ClaireContext): Response {
+  // ! highlight missing return types here
+  private getUsers(c: ClaireContext) {
     return c.response.json(users);
   }
 
