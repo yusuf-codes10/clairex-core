@@ -28,7 +28,7 @@ export class userKey extends ClaireKey {
   }
 
   // ! highlight missing return types here
-  private getUsers(c: ClaireContext) {
+  private getUsers(c: ClaireContext): Response {
     return c.response.json(users);
   }
 
