@@ -1,0 +1,25 @@
+{
+    "name": "@clairex/rules",
+    "version": "0.1.0",
+    "description": "Shared ClaireX validation rules, used by the editor plugin and the Bun loader",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": ["dist"],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yusuf-codes10/clairex-core"
+    },
+    "scripts": {
+        "build": "rm -rf dist && tsc -p tsconfig.json",
+        "test": "bun test",
+        "prepublishOnly": "bun run build"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.0.0"
+    }
+}
