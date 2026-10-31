@@ -1,4 +1,4 @@
-import type { Rule } from "./types";
+import type { Rule } from "../types";
 
 const ID = "export-class";
 

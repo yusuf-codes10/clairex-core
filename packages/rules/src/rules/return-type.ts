@@ -1,6 +1,6 @@
 import type * as TS from "typescript";
-import { violationAt } from "./helpers";
-import type { Rule, RuleViolation } from "./types";
+import { violationAt } from "../helpers";
+import type { Rule, RuleViolation } from "../types";
 
 const ID = "return-type";
 
