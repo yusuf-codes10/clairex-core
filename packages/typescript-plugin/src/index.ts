@@ -1,6 +1,6 @@
 import type ts from 'typescript/lib/tsserverlibrary';
 import { patchModuleLoader } from './module-loader';
-import { missingReturnTypes } from './diagnostics';
+import { claireDiagnostics } from './diagnostics';
 
 function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
     const tsModule = modules.typescript;
@@ -23,7 +23,7 @@ function init(modules: { typescript: typeof ts }): ts.server.PluginModule {
             if (!fileName.endsWith('.cx')) return prior;
 
             const sf = info.languageService.getProgram()?.getSourceFile(fileName);
-            return sf ? [...prior, ...missingReturnTypes(tsModule, sf)] : prior;
+            return sf ? [...prior, ...claireDiagnostics(tsModule, sf)] : prior;
         };
 
         return proxy;
