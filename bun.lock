@@ -12,16 +12,40 @@
         "typescript": "^5",
       },
     },
+    "packages/create-clairex": {
+      "name": "create-clairex",
+      "version": "1.0.0",
+      "bin": {
+        "create-clairex": "./index.ts",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+      },
+    },
+    "packages/rules": {
+      "name": "@clairex/rules",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.0.0",
+      },
+    },
     "packages/typescript-plugin": {
       "name": "@clairex/typescript-plugin",
       "version": "0.1.0",
+      "dependencies": {
+        "@clairex/rules": "^0.1.0",
+      },
       "devDependencies": {
         "typescript": "^5.0.0",
       },
     },
     "packages/vscode-extension": {
       "name": "clairex-vscode",
-      "version": "0.1.0",
+      "version": "0.2.0",
+      "dependencies": {
+        "@clairex/typescript-plugin": "0.1.0",
+      },
       "devDependencies": {
         "@types/vscode": "^1.80.0",
         "typescript": "^5.0.0",
@@ -29,6 +53,8 @@
     },
   },
   "packages": {
+    "@clairex/rules": ["@clairex/rules@workspace:packages/rules"],
+
     "@clairex/typescript-plugin": ["@clairex/typescript-plugin@workspace:packages/typescript-plugin"],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
@@ -41,8 +67,18 @@
 
     "clairex-vscode": ["clairex-vscode@workspace:packages/vscode-extension"],
 
+    "create-clairex": ["create-clairex@workspace:packages/create-clairex"],
+
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
+
+    "@clairex/rules/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
+
+    "create-clairex/@types/bun": ["@types/bun@1.4.4", "", { "dependencies": { "bun-types": "1.4.4" } }, "sha512-9wkRDXUXK124pEnAutE6n/l18j+i9GC5IAHK8TmX/2nlySETmky0OU6yL5U8pW1AoKh++AN9auDCr647BfurjQ=="],
+
+    "@clairex/rules/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
+
+    "create-clairex/@types/bun/bun-types": ["bun-types@1.4.4", "", { "dependencies": { "@types/node": "*", "undici-types": "*" } }, "sha512-yjrJh5oGX7mMPKGd19YXyIjmEuj4G4zNC30bs7PM9Az7NQ3ndF3j6hbeRdvJTRQEhJ/FYQwW0a2moweEi2hMxQ=="],
   }
 }
