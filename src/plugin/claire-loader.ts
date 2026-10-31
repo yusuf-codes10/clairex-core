@@ -49,15 +49,28 @@
 // };
 
 
+import { plugin } from "bun";
 import ts from "typescript";
 import { checkText, formatViolation } from "@clairex/rules";
 
-build.onLoad({ filter: /\.cx$/ }, async ({ path }) => {
-  const contents = await Bun.file(path).text();
+plugin({
+  name: "claire-loader",
+  setup(build) {
+    build.onLoad({ filter: /\.cx$/ }, async ({ path }) => {
+      const contents = await Bun.file(path).text();
 
-  const violations = checkText(ts, path, contents);
-  for (const v of violations) console.error(`[ClaireX] ${formatViolation(path, v)}`);
-  if (violations.some((v) => v.severity === "error")) process.exit(1);
+      // Run every rule from @clairex/rules on this file
+      const violations = checkText(ts, path, contents);
 
-  return { contents, loader: "ts" };
+      // Print every problem with file:line:column, not just the first one
+      for (const v of violations) {
+        console.error(`[ClaireX] ${formatViolation(path, v)}`);
+      }
+
+      // Errors stop the run; warnings are printed but let the file load
+      if (violations.some((v) => v.severity === "error")) process.exit(1);
+
+      return { contents, loader: "ts" };
+    });
+  },
 });

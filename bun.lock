@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "@clairex/core",
+      "dependencies": {
+        "@clairex/rules": "^0.1.0",
+      },
       "devDependencies": {
         "@clairex/typescript-plugin": "workspace:*",
         "@types/bun": "latest",
