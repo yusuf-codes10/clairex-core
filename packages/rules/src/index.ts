@@ -1,6 +1,6 @@
 import type * as TS from "typescript";
-import { exportClassRule } from "./export-class";
-import { returnTypeRule } from "./return-type";
+import { exportClassRule } from "./rules/export-class";
+import { returnTypeRule } from "./rules/return-type";
 import type { Rule, TSModule, Violation } from "./types";
 
 export type { Rule, RuleViolation, TSModule, Violation } from "./types";
