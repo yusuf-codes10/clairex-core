@@ -1,2 +1,4 @@
-export const purdy = "hello";
+export class Purdy {
+
+}
 

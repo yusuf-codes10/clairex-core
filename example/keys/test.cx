@@ -22,7 +22,7 @@ export class userKey extends ClaireKey {
 
   register(): void {
     this.routes("get", "/", this.getUsers);
-    this.routes("post", "/", this.createUser, [new userValidator()]);
+    this.routes("post", "/", this.createUser);
     this.routes("get", "/:id", this.getUserById);
     this.routes("patch", "/:id", this.updateUserName, [new userValidator()]);
   }
@@ -67,8 +67,9 @@ export class userKey extends ClaireKey {
     return c.response.json(users);
   }
 
-  private showSomething(): void {
+  showSomething(): string {
     console.log("something");
+    return 'something';
   }
 }
 
