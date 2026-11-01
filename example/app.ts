@@ -1,5 +1,5 @@
 import { ClaireX } from "../src";
 import { userKey } from "./keys/test.cx";
-import { Purdy } from "./keys/users.cx";
+// import { Purdy } from "./keys/users.cx";
 
 new ClaireX(2300).unlock(new userKey()).listen();

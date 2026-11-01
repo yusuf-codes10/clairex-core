@@ -1,4 +1,1 @@
-export class Purdy {
-
-}
-
+const purdy = "something that is not a class!";
