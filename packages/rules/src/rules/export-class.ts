@@ -5,6 +5,7 @@ const ID = "export-class";
 export const exportClassRule: Rule = {
     id: ID,
     description: "A .cx file must export a class.",
+    runtime: true,
 
     check(ts, sf) {
         // `export class A {}` and `export default class A {}` both carry the export keyword.

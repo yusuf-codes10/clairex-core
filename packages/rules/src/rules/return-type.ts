@@ -7,6 +7,7 @@ const ID = "return-type";
 export const returnTypeRule: Rule = {
     id: ID,
     description: "Methods and functions must declare an explicit return type.",
+    runtime: true,
 
     check(ts, sf) {
         const found: RuleViolation[] = [];
