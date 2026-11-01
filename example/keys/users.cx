@@ -1,1 +1,2 @@
-const purdy = "hello";
+export const purdy = "hello";
+

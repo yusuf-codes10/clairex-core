@@ -67,7 +67,7 @@ export class userKey extends ClaireKey {
     return c.response.json(users);
   }
 
-  private showSomething() {
+  private showSomething(): void {
     console.log("something");
   }
 }
