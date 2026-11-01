@@ -23,8 +23,23 @@ export interface Violation extends RuleViolation {
     column: number;
 }
 
+/** Extra things a rule may use. Everything here is optional, so a rule must still behave without it. */
+export interface RuleContext {
+    /**
+     * Available in the editor, where the TypeScript server has a full program.
+     * Missing when a file is parsed on its own (the Bun loader), so rules must
+     * not assume it exists.
+     */
+    checker?: TS.TypeChecker;
+}
+
 export interface Rule {
     id: string;
     description: string;
-    check(ts: TSModule, sourceFile: TS.SourceFile): RuleViolation[];
+    /**
+     * Does this rule run in the Bun loader at runtime? Defaults to true.
+     * Set to false for rules that only make sense in the editor.
+     */
+    runtime?: boolean;
+    check(ts: TSModule, sourceFile: TS.SourceFile, ctx: RuleContext): RuleViolation[];
 }
